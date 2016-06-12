@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Music</string>
+    <string name="skip_previous">前一首</string>
+    <string name="play_pause">播放/暂停</string>
+    <string name="skip_next">下一首</string>
+    <string name="play_item">播放</string>
+    <string name="random_queue_title">随机</string>
+    <string name="label_previous">前</string>
+    <string name="currently_playing_song">当前播放曲目</string>
+    <string name="currently_playing_artist">演唱者</string>
+    <string name="currently_playing_extra_info">信息</string>
+    <string name="error_no_connection">没有网络连接！</string>
+    <string name="error_loading_media">加载出错!</string>
+    <string name="open_content_drawer">开启</string>
+    <string name="close_content_drawer">关闭</string>
+</resources>
