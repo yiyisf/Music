@@ -3,7 +3,6 @@ package music.com.example.liuzhe.music;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -71,7 +70,7 @@ public class MusicService extends MediaBrowserServiceCompat implements Callback,
 
         Log.i(TAG, "Created -- 02");
         Context context = getApplicationContext();
-        Intent intent = new Intent(context, MainActivity.class);
+        Intent intent = new Intent(context, MusicActivity.class);
         PendingIntent pi = PendingIntent.getActivity(context, 99 /*request code*/,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
         mSession.setSessionActivity(pi);

@@ -13,4 +13,20 @@
     <string name="error_loading_media">加载出错!</string>
     <string name="open_content_drawer">开启</string>
     <string name="close_content_drawer">关闭</string>
+    <string name="prompt_email">邮箱</string>
+    <string name="prompt_password">密码</string>
+    <string name="action_sign_in_short">登录</string>
+    <string name="action_sign_in">登录</string>
+    <string name="action_register">注册</string>
+    <string name="error_invalid_password">密码输入错误</string>
+    <string name="error_field_required">请输入此字段</string>
+    <string name="error_invalid_email">邮箱输入错误</string>
+    <string name="permission_rationale">Contacts permissions are needed for providing email         completions.</string>
+    <string name="error_incorrect_password">密码输入错误</string>
+    <string name="prompt_sort_name">昵称</string>
+    <string name="prompt_reinput_password">密码</string>
+    <string name="error_not_same_password">请输入相同的密码</string>
+    <string name="error_invalid_sortname">请输入昵称</string>
+    <string name="title_activity_register">注册</string>
+    <string name="title_activity_login">登录</string>
 </resources>

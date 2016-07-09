@@ -18,12 +18,22 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
+
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.OptionalPendingResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
 import music.com.example.liuzhe.music.ui.PlaybackControlsFragment;
 
-public class MainActivity extends AppCompatActivity implements Thread.UncaughtExceptionHandler,
+public class MusicActivity extends AppCompatActivity implements Thread.UncaughtExceptionHandler,
         BrowseFragment.FragmentDataHelper {
 
     private static final String TAG = "Main Activity";
@@ -89,7 +99,17 @@ public class MainActivity extends AppCompatActivity implements Thread.UncaughtEx
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(FirebaseAuth.getInstance().getCurrentUser()!=null) {
+            FirebaseAuth.getInstance().signOut();
+        }
 
+        if(MusicApplication.getGoogleSignInAccount()!=null && MusicApplication.getmGoogleApiClient().isConnected()){
+            Auth.GoogleSignInApi.signOut(MusicApplication.getmGoogleApiClient());
+        }
+    }
 
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
         @Override
@@ -119,6 +139,8 @@ public class MainActivity extends AppCompatActivity implements Thread.UncaughtEx
             updateDrawerToggle();
         }
     };
+    private GoogleApiClient mGoogleApiClient;
+    private GoogleSignInOptions gso;
 
     private void connectToSession(MediaSessionCompat.Token token) throws RemoteException {
         MediaControllerCompat mediaControllerCompat = new MediaControllerCompat(this, token);
@@ -143,7 +165,8 @@ public class MainActivity extends AppCompatActivity implements Thread.UncaughtEx
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+//        Log.i("主界面：","起来了");
+//        checkLoginstatus();
         setContentView(R.layout.activity_main);
         initializeToolbar();
 
@@ -152,6 +175,35 @@ public class MainActivity extends AppCompatActivity implements Thread.UncaughtEx
 
         initializeFromParams(savedInstanceState, getIntent());
         Log.i(TAG, "after create view");
+    }
+
+    private void checkLoginstatus() {
+        gso = MusicApplication.getGoogleSignInOptions();
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .build();
+
+        OptionalPendingResult<GoogleSignInResult> pendingResult =
+                Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
+        if (pendingResult.isDone()) {
+            GoogleSignInAccount googleAccount = pendingResult.get().getSignInAccount();
+            Toast.makeText(this, "已登录google user：" + googleAccount.getDisplayName(), Toast.LENGTH_SHORT).show();
+            MusicApplication.setGoogleSignInAccount(googleAccount);
+            startLogin();
+        } else {
+            Toast.makeText(this, "可使用google登录：", Toast.LENGTH_SHORT).show();
+        }
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+//            Toast.makeText(this, "已登录firebase user：" + auth.getAuth().get("token"), Toast.LENGTH_SHORT).show();
+            startLogin();
+        }
+    }
+
+    private void startLogin() {
+        Intent i = new Intent(MusicActivity.this, LoginActivity.class);
+        startActivity(i);
+        finish();
     }
 
     private void initializeToolbar() {
@@ -227,6 +279,7 @@ public class MainActivity extends AppCompatActivity implements Thread.UncaughtEx
     @Override
     protected void onStart() {
         super.onStart();
+        Log.i("主界面","start了");
         mControlsFragment = (PlaybackControlsFragment) getFragmentManager()
                 .findFragmentById(R.id.fragment_playback_controls);
 

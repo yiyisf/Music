@@ -1,0 +1,94 @@
+{
+  "project_info": {
+    "project_number": "50073597837",
+    "firebase_url": "https://glowing-fire-3217.firebaseio.com",
+    "project_id": "glowing-fire-3217",
+    "storage_bucket": "glowing-fire-3217.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50073597837:android:2cb595be268c0976",
+        "android_client_info": {
+          "package_name": "com.example.liuzhe.myfirebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "50073597837-k9kff4kes5u11iq9cut52f09ckqmml2h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.liuzhe.myfirebase",
+            "certificate_hash": "B8A5ADBE2D99B087E1385991B1FCC8A48786C61A"
+          }
+        },
+        {
+          "client_id": "50073597837-6l1ich9jiq7r2c5uj3stcmul78tcs08g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9mV0BPtGctnZrO9X7enmIDLgJqHVTlnE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50073597837:android:595d6a197026637f",
+        "android_client_info": {
+          "package_name": "music.com.example.liuzhe.music"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "50073597837-an4s5tib0c3tov1fq9arqthsk042dco7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "music.com.example.liuzhe.music",
+            "certificate_hash": "DEFFFEFDF23C76DD5727E516D00BED9FBBBF1558"
+          }
+        },
+        {
+          "client_id": "50073597837-6l1ich9jiq7r2c5uj3stcmul78tcs08g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9mV0BPtGctnZrO9X7enmIDLgJqHVTlnE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "50073597837-6l1ich9jiq7r2c5uj3stcmul78tcs08g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
