@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,6 +16,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,10 +28,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import music.com.example.liuzhe.music.util.AlbumArtCache;
 import music.com.example.liuzhe.music.util.MediaIDHelper;
 import music.com.example.liuzhe.music.util.NetworkHelper;
 
@@ -208,6 +213,10 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
                 mFragmentListenr.onMediaItemSelected(item);
             }
         });
+
+//        list_music.setOnScrollChangeListener();
+
+
         Log.i(TAG, "Created");
         return root;
     }
@@ -217,7 +226,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     private static class BrowseAdapter extends ArrayAdapter<MediaBrowserCompat.MediaItem> {
 
 
-        public BrowseAdapter(Context context) {
+        public  BrowseAdapter(Context context) {
             super(context, R.layout.media_list_item, new ArrayList<MediaBrowserCompat.MediaItem>());
         }
 
@@ -229,8 +238,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 
         //        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
+        public View getView(final int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
 
             if (convertView == null) {
@@ -238,29 +246,39 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
                         .inflate(R.layout.media_list_item, parent, false);
                 holder = new ViewHolder();
                 holder.mImageView = (ImageView) convertView.findViewById(R.id.play_eq);
-                holder.mImageView.setVisibility(View.GONE);
+//                holder.mImageView.setVisibility(View.GONE);
                 holder.mTitleView = (TextView) convertView.findViewById(R.id.title);
                 holder.mDescriptionView = (TextView) convertView.findViewById(R.id.description);
+                holder.mDescriptionView.setVisibility(View.GONE);
                 convertView.setTag(holder);
             } else {
+//                Log.i(TAG, "加载已创建的view：" + position);
                 holder = (ViewHolder) convertView.getTag();
             }
 
+
             MediaBrowserCompat.MediaItem item = getItem(position);
             holder.mTitleView.setText(item.getDescription().getTitle());
-            holder.mDescriptionView.setText(item.getDescription().getSubtitle());
+            Log.i(TAG, "list view 记载第" + position + "各item" + item.getDescription().getTitle() + (holder.mImageView.getDrawable() == null));
             if (item.isPlayable()) {
+                holder.mDescriptionView.setVisibility(View.VISIBLE);
+                holder.mDescriptionView.setText(item.getDescription().getSubtitle());
+                ViewGroup.LayoutParams params = holder.mImageView.getLayoutParams();
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                holder.mImageView.setLayoutParams(params);
+
                 holder.mImageView.setImageDrawable(
                         getContext().getResources().getDrawable(R.drawable.ic_play_arrow_red_24dp));
                 holder.mImageView.setVisibility(View.VISIBLE);
 
                 MediaControllerCompat controller = ((AppCompatActivity) getContext())
                         .getSupportMediaController();
-                if (controller != null && controller.getMetadata()!=null && controller.getPlaybackState() != null) {
+                if (controller != null && controller.getMetadata() != null && controller.getPlaybackState() != null) {
                     String currentPlaying = controller.getMetadata().getDescription().getMediaId();
                     String musicId = MediaIDHelper.extractMusicIDFromMediaID(
                             item.getDescription().getMediaId());
-                    if(currentPlaying!=null && currentPlaying.equals(musicId)) {
+                    if (currentPlaying != null && currentPlaying.equals(musicId)) {
                         switch (controller.getPlaybackState().getState()) {
                             case PlaybackStateCompat.STATE_PLAYING:
                                 holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_equalizer_red_24dp));
@@ -277,11 +295,57 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
                         }
                     }
                 }
+            } else {
+                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
+                String mArtUrl = item.getDescription().getTitle().toString();
+//                new ImageDownloaderTask(holder.mImageView).execute(mArtUrl);
+//                显示歌手头像
+                if (holder.mImageView.getDrawable() == null) {
+                    final AlbumArtCache cache = AlbumArtCache.getInstance();
+//                if (art == null) {
+//                    final String mArtUrl = item.getDescription().getTitle().toString();
+                    final Bitmap art = cache.getIconImage(mArtUrl);
+//                }
+                    final ImageView mView = holder.mImageView;
+                    if (art != null) {
+//                        Log.i(TAG, "内存中取到了：" + mArtUrl +"postion:" + position);
+                        mView.setImageBitmap(art);
+                    } else {
+//                        Log.i(TAG, "内存没有取到：" + mArtUrl);
+                        cache.fetch(mArtUrl, new AlbumArtCache.FetchListener() {
+                                    @Override
+                                    public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
+                                        if (icon != null) {
+                                            Log.i(TAG, "设置" + artUrl + "的图片" + "postion:" + position);
+//                                        if (isActive()) {
+                                            mView.setImageBitmap(icon);
+//                                        }
+                                        }
+                                    }
+                                    @Override
+                                    public void onError(String artUrl, Exception e) {
+                                    mView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
+//                                        Log.e(TAG, "加载图标出错");
+                                    }
+                                }
+                        );
+                    }
+                }
+
             }
             return convertView;
         }
+
+
     }
 
+    //判断组件是否已添加至activity
+    private boolean isActive() {
+        if (isAdded()) {
+            return true;
+        }
+        return false;
+    }
 
     public void showProgressDialog() {
         if (mProgressDialog == null) {
@@ -328,3 +392,47 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 //                " isOnline=" + NetworkHelper.isOnline(getActivity()));
     }
 }
+//    private class ImageDownloaderTask extends AsyncTask<String, Void, Bitmap> {
+//        private final WeakReference<ImageView> imageViewWeakReference;
+//
+//        public ImageDownloaderTask(ImageView imageView) {
+//            imageViewWeakReference = new WeakReference<ImageView>(imageView);
+//        }
+//
+//
+//        @Override
+//        protected Bitmap doInBackground(final String... params) {
+//            final AlbumArtCache cache = AlbumArtCache.getInstance();
+//            Bitmap art = cache.getIconImage(params[0]);
+//
+//            ImageView mView = imageViewWeakReference.get();
+//            if (art != null) {
+//                Log.i(TAG, "内存中取到了：" + params[0]);
+////                mView.setImageBitmap(art);
+//            } else {
+//                Log.i(TAG, "内存没有取到：" + params[0]);
+//                cache.fetch(params[0], new AlbumArtCache.FetchListener() {
+//                            @Override
+//                            public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
+//                                if (icon != null) {
+//                                    Log.i(TAG, "album art icon of w=" + icon.getWidth() +
+//                                            " h=" + icon.getHeight());
+////                                        if (isActive()) {
+////                                    mView.setImageBitmap(cache.getIconImage(params[0]));
+////                                        }
+//                                }
+//                            }
+//
+//                            @Override
+//                            public void onError(String artUrl, Exception e) {
+////                                mView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
+//                                Log.e(TAG, "加载图标出错");
+//                            }
+//                        }
+//                );
+//                return null;
+//            }
+//
+//        }
+//    }
+

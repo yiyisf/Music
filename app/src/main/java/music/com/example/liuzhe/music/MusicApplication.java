@@ -6,14 +6,23 @@ import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * Created by liuzhe on 2016/6/12.
  */
 public class MusicApplication extends Application {
     private static MusicApplication context;
-    public static GoogleApiClient mGoogleApiClient;
-    public static GoogleSignInOptions googleSignInOptions;
+    private static GoogleApiClient mGoogleApiClient;
+    private static GoogleSignInOptions googleSignInOptions;
+
+    public static StorageReference getStorageReference() {
+        return storageReference;
+    }
+
+    private static StorageReference storageReference;
+
 
     public static GoogleSignInAccount getGoogleSignInAccount() {
         return googleSignInAccount;
@@ -50,5 +59,6 @@ public class MusicApplication extends Application {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, getGoogleSignInOptions())
                 .build();
+        storageReference = FirebaseStorage.getInstance().getReference();
     }
 }

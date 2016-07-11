@@ -53,6 +53,7 @@ public class PlaybackControlsFragment extends Fragment implements Thread.Uncaugh
     private TextView mExtraInfo;
     private ImageView mAlbumArt;
     private String mArtUrl;
+    private AlbumArtCache cache;
     // Receive callbacks from the MediaController. Here we update our state such as which queue
     // is being shown, the current title and description and the PlaybackState.
     private final MediaControllerCompat.Callback mCallback = new MediaControllerCompat.Callback() {
@@ -87,7 +88,7 @@ public class PlaybackControlsFragment extends Fragment implements Thread.Uncaugh
         mTitle = (TextView) rootView.findViewById(R.id.title);
         mSubtitle = (TextView) rootView.findViewById(R.id.artist);
         mExtraInfo = (TextView) rootView.findViewById(R.id.extra_info);
-        mAlbumArt = (ImageView) rootView.findViewById(R.id.album_art);
+        mAlbumArt = (ImageView) rootView.findViewById(R.id.play_album_art);
         rootView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -154,35 +155,42 @@ public class PlaybackControlsFragment extends Fragment implements Thread.Uncaugh
         Log.i(TAG, "music srouce : " + metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI));
         mTitle.setText(metadata.getDescription().getTitle());
         mSubtitle.setText(metadata.getDescription().getSubtitle());
-//        String artUrl = null;
-//        if (metadata.getDescription().getIconUri() != null) {
-//            artUrl = metadata.getDescription().getIconUri().toString();
-//        }
-//        if (!TextUtils.equals(artUrl, mArtUrl)) {
-//            mArtUrl = artUrl;
-//            Bitmap art = metadata.getDescription().getIconBitmap();
-//            AlbumArtCache cache = AlbumArtCache.getInstance();
-//            if (art == null) {
-//                art = cache.getIconImage(mArtUrl);
-//            }
-//            if (art != null) {
-//                mAlbumArt.setImageBitmap(art);
-//            } else {
-//                cache.fetch(artUrl, new AlbumArtCache.FetchListener() {
-//                            @Override
-//                            public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
-//                                if (icon != null) {
-//                                    Log.i(TAG, "album art icon of w=" + icon.getWidth() +
-//                                            " h=" + icon.getHeight());
-//                                    if (isAdded()) {
-//                                        mAlbumArt.setImageBitmap(icon);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                );
-//            }
-//        }
+//        mAlbumArt.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.ic_default_artist));
+        String artUrl = null;
+        if (metadata.getDescription().getSubtitle() != null) {
+            artUrl = metadata.getDescription().getSubtitle().toString();
+        }
+        if (!TextUtils.equals(artUrl, mArtUrl)) {
+            mArtUrl = artUrl;
+            Bitmap art = metadata.getDescription().getIconBitmap();
+            cache = AlbumArtCache.getInstance();
+            if (art == null) {
+                art = cache.getIconImage(mArtUrl);
+            }
+            if (art != null) {
+                mAlbumArt.setImageBitmap(art);
+            } else {
+                cache.fetch(artUrl, new AlbumArtCache.FetchListener() {
+                            @Override
+                            public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
+                                if (icon != null) {
+                                    Log.i(TAG, "album art icon of w=" + icon.getWidth() +
+                                            " h=" + icon.getHeight());
+                                    if (isAdded()) {
+                                        mAlbumArt.setImageBitmap(icon);
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String artUrl, Exception e) {
+                                mAlbumArt.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.ic_default_artist));
+                                Log.e(TAG, "加载图标出错");
+                            }
+                        }
+                );
+            }
+        }
     }
 
     public void setExtraInfo(String extraInfo) {

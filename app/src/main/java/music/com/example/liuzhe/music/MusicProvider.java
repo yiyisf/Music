@@ -212,7 +212,8 @@ public class MusicProvider {
 
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("music");
-        Query query = ref.limitToFirst(1000);
+        Query query = ref.limitToFirst(100);
+//        ref.startAt("a").limitToFirst(100);
         Log.i(TAG, "link to firebase.......");
         query.addChildEventListener(new ChildEventListener() {
             @Override
@@ -223,7 +224,7 @@ public class MusicProvider {
 //                Songlist.add(song);
                 callBack.onAdd(song);
 
-                if(song_no >= 1000){
+                if(song_no >= 100){
                     mCurrentState = State.INITIALIZED;
                 }
 //                MediaMetadataCompat item = buildFromSong(song);
@@ -264,7 +265,7 @@ public class MusicProvider {
     private MediaMetadataCompat buildFromSong(Song song) {
 //        String name = json.getString(JSON_NAME);
         String name = song.getName();
-        String[] temp = name.split("-");
+        String[] temp = name.split(" - ", 2);
         String artist = temp[0];
         String genre = temp[0];
         String title = temp[1];

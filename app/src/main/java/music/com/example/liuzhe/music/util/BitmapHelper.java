@@ -19,11 +19,18 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import music.com.example.liuzhe.music.MusicApplication;
 
 public class BitmapHelper {
     private static final String TAG = "BitmapHrlper";
@@ -66,6 +73,8 @@ public class BitmapHelper {
             throws IOException {
         URL url = new URL(uri);
         BufferedInputStream is = null;
+//        is = new BufferedInputStream(new ByteArrayInputStream())
+
         try {
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             is = new BufferedInputStream(urlConnection.getInputStream());

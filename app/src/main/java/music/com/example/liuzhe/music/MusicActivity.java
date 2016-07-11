@@ -102,13 +102,13 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(FirebaseAuth.getInstance().getCurrentUser()!=null) {
-            FirebaseAuth.getInstance().signOut();
-        }
-
-        if(MusicApplication.getGoogleSignInAccount()!=null && MusicApplication.getmGoogleApiClient().isConnected()){
-            Auth.GoogleSignInApi.signOut(MusicApplication.getmGoogleApiClient());
-        }
+//        if(FirebaseAuth.getInstance().getCurrentUser()!=null) {
+//            FirebaseAuth.getInstance().signOut();
+//        }
+//
+//        if(MusicApplication.getGoogleSignInAccount()!=null && MusicApplication.getmGoogleApiClient().isConnected()){
+//            Auth.GoogleSignInApi.signOut(MusicApplication.getmGoogleApiClient());
+//        }
     }
 
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
