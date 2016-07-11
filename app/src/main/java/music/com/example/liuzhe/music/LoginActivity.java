@@ -43,9 +43,12 @@ import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,14 +146,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     private void Checklogin() {
-        OptionalPendingResult<GoogleSignInResult> pendingResult =
-                Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
-        if (pendingResult.isDone()) {
-            GoogleSignInAccount googleAccount = pendingResult.get().getSignInAccount();
-            Toast.makeText(this, "已登录google user：" + googleAccount.getDisplayName(), Toast.LENGTH_SHORT).show();
-            MusicApplication.setGoogleSignInAccount(googleAccount);
-            startMain();
-        }
+//        OptionalPendingResult<GoogleSignInResult> pendingResult =
+//                Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
+//        if (pendingResult.isDone()) {
+//            GoogleSignInAccount googleAccount = pendingResult.get().getSignInAccount();
+//            Toast.makeText(this, "已登录google user：" + googleAccount.getDisplayName(), Toast.LENGTH_SHORT).show();
+//            MusicApplication.setGoogleSignInAccount(googleAccount);
+//            startMain();
+//        }
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
@@ -256,12 +259,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
     }
 
+    //使用emal/password方式登录
     private void fireBaselogin(final String email, String password) {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
         inputMethodManager.hideSoftInputFromWindow(mPasswordView.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-
-        Toast.makeText(this, "mAuth:" + mAuth.toString(),Toast.LENGTH_SHORT).show();
 
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -410,10 +412,48 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             GoogleSignInAccount googleSignInAccount = googleSignInResult.getSignInAccount();
             mEmailView.setText(googleSignInAccount.getDisplayName());
             MusicApplication.setGoogleSignInAccount(googleSignInAccount);
-            startMain();
+            firebaseAuthWithGoogle(googleSignInAccount);
+//            startMain();
         } else {
             Toast.makeText(LoginActivity.this, "登陆失败！" + googleSignInResult.getStatus(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    //使用google返回的token登录firebase
+    private void firebaseAuthWithGoogle(final GoogleSignInAccount account) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+
+        mAuth.signInWithCredential(credential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                Log.d("登录", "login firebase use google complate...");
+                if (!task.isSuccessful()) {
+                    Toast.makeText(LoginActivity.this, "登录失败", Toast.LENGTH_SHORT).show();
+                } else {
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    Log.i("登录", "获取照片地址信息:" + String.valueOf(user.getPhotoUrl() != null));
+                    Log.i("登录", "已登录的email" + user.getEmail());
+                    if (user.getDisplayName() == null || user.getPhotoUrl() == null) {
+                        user.updateEmail(account.getEmail());
+                        UserProfileChangeRequest userPrifile = new UserProfileChangeRequest.Builder()
+                                .setDisplayName(account.getDisplayName())
+                                .setPhotoUri(account.getPhotoUrl())
+                                .build();
+                        user.updateProfile(userPrifile).addOnCompleteListener(
+                                new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (task.isSuccessful()) {
+                                            Log.i("登录", "更新用户信息成功");
+                                        }
+                                    }
+                                }
+                        );
+                    }
+                    startMain();
+                }
+            }
+        });
     }
 
     private interface ProfileQuery {

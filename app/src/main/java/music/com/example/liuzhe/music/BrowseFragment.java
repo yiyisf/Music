@@ -25,6 +25,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +51,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     private FragmentDataHelper mFragmentListenr;
     private View errorView;
     private TextView errorMsgView;
+    private ProgressBar mProgressBar;
 
 
     private MediaControllerCompat.Callback mMediaControllerCallback =
@@ -200,6 +202,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
         errorView = root.findViewById(R.id.playback_error);
         errorMsgView = (TextView) errorView.findViewById(R.id.error_message);
         errorView.setVisibility(View.GONE);
+        mProgressBar = (ProgressBar) root.findViewById(R.id.progressBar);
 
         ListView list_music = (ListView) root.findViewById(R.id.list_music);
         list_music.setAdapter(mBrowseAdapter);
@@ -223,14 +226,14 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 
 
     // An adapter for showing the list of browsed MediaItem's
-    private static class BrowseAdapter extends ArrayAdapter<MediaBrowserCompat.MediaItem> {
+    private class BrowseAdapter extends ArrayAdapter<MediaBrowserCompat.MediaItem> {
 
 
         public  BrowseAdapter(Context context) {
             super(context, R.layout.media_list_item, new ArrayList<MediaBrowserCompat.MediaItem>());
         }
 
-        static class ViewHolder {
+        class ViewHolder {
             ImageView mImageView;
             TextView mTitleView;
             TextView mDescriptionView;
@@ -239,6 +242,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
         //        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
+            mProgressBar.setVisibility(ProgressBar.INVISIBLE);
             ViewHolder holder;
 
             if (convertView == null) {
@@ -296,7 +300,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
                     }
                 }
             } else {
-                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
+//                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
                 String mArtUrl = item.getDescription().getTitle().toString();
 //                new ImageDownloaderTask(holder.mImageView).execute(mArtUrl);
 //                显示歌手头像
@@ -308,27 +312,24 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 //                }
                     final ImageView mView = holder.mImageView;
                     if (art != null) {
-//                        Log.i(TAG, "内存中取到了：" + mArtUrl +"postion:" + position);
                         mView.setImageBitmap(art);
                     } else {
-//                        Log.i(TAG, "内存没有取到：" + mArtUrl);
-                        cache.fetch(mArtUrl, new AlbumArtCache.FetchListener() {
-                                    @Override
-                                    public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
-                                        if (icon != null) {
-                                            Log.i(TAG, "设置" + artUrl + "的图片" + "postion:" + position);
-//                                        if (isActive()) {
-                                            mView.setImageBitmap(icon);
+//                        cache.fetch(mArtUrl, new AlbumArtCache.FetchListener() {
+//                                    @Override
+//                                    public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
+//                                        if (icon != null) {
+//                                            Log.i(TAG, "设置" + artUrl + "的图片" + "postion:" + position);
+////                                        if (isActive()) {
+//                                            mView.setImageBitmap(icon);
+////                                        }
 //                                        }
-                                        }
-                                    }
-                                    @Override
-                                    public void onError(String artUrl, Exception e) {
-                                    mView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
-//                                        Log.e(TAG, "加载图标出错");
-                                    }
-                                }
-                        );
+//                                    }
+//                                    @Override
+//                                    public void onError(String artUrl, Exception e) {
+//                                        mView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
+//                                    }
+//                                }
+//                        );
                     }
                 }
 

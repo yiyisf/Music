@@ -36,6 +36,7 @@ public class MusicApplication extends Application {
 
     public static GoogleSignInOptions getGoogleSignInOptions() {
         googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getContext().getString(R.string.web_client_id))
                 .requestEmail()
                 .requestProfile()
                 .build();

@@ -77,7 +77,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
 
                 @Override
                 public void onPlaybackStateChanged(PlaybackStateCompat state) {
-                    Log.i(TAG, "播放状态改变为： "+ state);
+                    Log.i(TAG, "播放状态改变为： " + state);
                     if (shouldShowControls()) {
                         showPlaybackControls();
                     } else {
@@ -87,7 +87,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
 
                 @Override
                 public void onMetadataChanged(MediaMetadataCompat metadata) {
-                    Log.i(TAG, "播放内容改变为： "+ metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI));
+                    Log.i(TAG, "播放内容改变为： " + metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI));
                     if (shouldShowControls()) {
                         showPlaybackControls();
                     } else {
@@ -102,13 +102,14 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        if(FirebaseAuth.getInstance().getCurrentUser()!=null) {
-//            FirebaseAuth.getInstance().signOut();
-//        }
-//
-//        if(MusicApplication.getGoogleSignInAccount()!=null && MusicApplication.getmGoogleApiClient().isConnected()){
-//            Auth.GoogleSignInApi.signOut(MusicApplication.getmGoogleApiClient());
-//        }
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            FirebaseAuth.getInstance().signOut();
+        }
+
+        if (MusicApplication.getGoogleSignInAccount() != null && MusicApplication.getmGoogleApiClient().isConnected()) {
+            Auth.GoogleSignInApi.signOut(MusicApplication.getmGoogleApiClient());
+        }
+
     }
 
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
@@ -134,11 +135,11 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     };
     private FragmentManager.OnBackStackChangedListener mBackStackChangedListener =
             new FragmentManager.OnBackStackChangedListener() {
-        @Override
-        public void onBackStackChanged() {
-            updateDrawerToggle();
-        }
-    };
+                @Override
+                public void onBackStackChanged() {
+                    updateDrawerToggle();
+                }
+            };
     private GoogleApiClient mGoogleApiClient;
     private GoogleSignInOptions gso;
 
@@ -154,7 +155,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
             hidePlaybackControls();
         }
 
-        if(mControlsFragment!= null){
+        if (mControlsFragment != null) {
             mControlsFragment.onConnected();
         }
 
@@ -168,36 +169,37 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
 //        Log.i("主界面：","起来了");
 //        checkLoginstatus();
         setContentView(R.layout.activity_main);
+
+        checkLoginstatus();
         initializeToolbar();
 
         mMediaBrowser = new MediaBrowserCompat(this,
-                    new ComponentName(this, MusicService.class), mConnectionCallback, null);
+                new ComponentName(this, MusicService.class), mConnectionCallback, null);
 
         initializeFromParams(savedInstanceState, getIntent());
         Log.i(TAG, "after create view");
     }
 
     private void checkLoginstatus() {
-        gso = MusicApplication.getGoogleSignInOptions();
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .build();
-
-        OptionalPendingResult<GoogleSignInResult> pendingResult =
-                Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
-        if (pendingResult.isDone()) {
-            GoogleSignInAccount googleAccount = pendingResult.get().getSignInAccount();
-            Toast.makeText(this, "已登录google user：" + googleAccount.getDisplayName(), Toast.LENGTH_SHORT).show();
-            MusicApplication.setGoogleSignInAccount(googleAccount);
-            startLogin();
-        } else {
-            Toast.makeText(this, "可使用google登录：", Toast.LENGTH_SHORT).show();
-        }
+//        gso = MusicApplication.getGoogleSignInOptions();
+//        mGoogleApiClient = new GoogleApiClient.Builder(this)
+//                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+//                .build();
+//
+//        OptionalPendingResult<GoogleSignInResult> pendingResult =
+//                Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
+//        if (pendingResult.isDone()) {
+//            GoogleSignInAccount googleAccount = pendingResult.get().getSignInAccount();
+//            Toast.makeText(this, "已登录google user：" + googleAccount.getDisplayName(), Toast.LENGTH_SHORT).show();
+//            MusicApplication.setGoogleSignInAccount(googleAccount);
+//        } else {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
+            Toast.makeText(this, "可使用google或emal登录：", Toast.LENGTH_SHORT).show();
 //            Toast.makeText(this, "已登录firebase user：" + auth.getAuth().get("token"), Toast.LENGTH_SHORT).show();
             startLogin();
         }
+//        }
     }
 
     private void startLogin() {
@@ -214,7 +216,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
         }
 //        mToolbar.inflateMenu(R.menu.main);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if(mDrawerLayout!=null){
+        if (mDrawerLayout != null) {
             // Create an ActionBarDrawerToggle that will handle opening/closing of the drawer:
             mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
                     mToolbar, R.string.open_content_drawer, R.string.close_content_drawer);
@@ -222,7 +224,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
 //            populateDrawerItems(navigationView);
             setSupportActionBar(mToolbar);
             updateDrawerToggle();
-        }else {
+        } else {
             setSupportActionBar(mToolbar);
         }
 
@@ -260,7 +262,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     private void navigateToBrowser(String mediaId) {
         Log.i(TAG, "to browser meids : " + mediaId);
         BrowseFragment fragment = getBrowseFragment();
-        if(fragment == null || !TextUtils.equals(fragment.getMediaId(), mediaId)){
+        if (fragment == null || !TextUtils.equals(fragment.getMediaId(), mediaId)) {
             fragment = new BrowseFragment();
             fragment.setMediaId(mediaId);
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
@@ -268,7 +270,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
                     R.animator.slide_in_from_right, R.animator.slide_out_to_left,
                     R.animator.slide_in_from_left, R.animator.slide_out_to_right);
             transaction.replace(R.id.container, fragment, FRAGMENT_TAG);
-            if(mediaId!= null){
+            if (mediaId != null) {
                 transaction.addToBackStack(null);
             }
             transaction.commit();
@@ -279,7 +281,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i("主界面","start了");
+        Log.i("主界面", "start了");
         mControlsFragment = (PlaybackControlsFragment) getFragmentManager()
                 .findFragmentById(R.id.fragment_playback_controls);
 
@@ -316,7 +318,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     @Override
     protected void onStop() {
         super.onStop();
-        if(getSupportMediaController()!=null){
+        if (getSupportMediaController() != null) {
             getSupportMediaController().unregisterCallback(mMediaControllerCallback);
         }
         mMediaBrowser.disconnect();
@@ -338,7 +340,8 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
             Log.i(TAG, "播放前状态是：" + getSupportMediaController().getPlaybackState().getState());
             Log.i(TAG, "启动播放" + item.getDescription().getTitle());
             getSupportMediaController().getTransportControls().playFromMediaId(item.getMediaId(), null);
-            Log.i(TAG, "播放后状态是：" + getSupportMediaController().getPlaybackState().getState());;
+            Log.i(TAG, "播放后状态是：" + getSupportMediaController().getPlaybackState().getState());
+            ;
         }
     }
 
@@ -374,7 +377,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
      */
     protected boolean shouldShowControls() {
         MediaControllerCompat mediaController = getSupportMediaController();
-        Log.i(TAG, "播放控制器当前播放状态为： "+ mediaController.getPlaybackState().getState());
+        Log.i(TAG, "播放控制器当前播放状态为： " + mediaController.getPlaybackState().getState());
         if (mediaController == null ||
                 mediaController.getMetadata() == null ||
                 mediaController.getPlaybackState() == null) {

@@ -22,8 +22,10 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.LruCache;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.BufferedInputStream;
@@ -63,7 +65,8 @@ public final class AlbumArtCache {
     public static AlbumArtCache getInstance() {
         return sInstance;
     }
-    private Set<String > tasks;
+
+    private static Set<String> tasks;
 
     private AlbumArtCache() {
         // Holds no more than MAX_ALBUM_ART_CACHE_SIZE bytes, bounded by maxmemory/4 and
@@ -102,45 +105,45 @@ public final class AlbumArtCache {
             listener.onFetched(artUrl, bitmap[BIG_BITMAP_INDEX], bitmap[ICON_BITMAP_INDEX]);
             return;
         }
-        Log.i(TAG, "getOrFetch: starting asynctask to fetch " + artUrl);
         if(!tasks.contains(artUrl)) {
             tasks.add(artUrl);
             StorageReference reference = MusicApplication.getStorageReference().child("DiscoArtistImage/" + artUrl + ".jpg");
             final long ONE_MEGABYTE = 100 * 1024;  // 100kb
-            reference.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+
+            Log.i(TAG, "storage reef is :" + reference.getPath());
+            Log.i(TAG, "getOrFetch: starting asynctask to fetch " + artUrl);
+            reference.getBytes(ONE_MEGABYTE).addOnCompleteListener(new OnCompleteListener<byte[]>() {
                 @Override
-                public void onSuccess(byte[] bytes) {
-                    Bitmap[] bitmaps;//保存相应的bitmap和icon
-                    BufferedInputStream is = null;
-                    is = new BufferedInputStream(new ByteArrayInputStream(bytes));
-                    is.mark(MAX_READ_LIMIT_PER_IMG);
-                    int scaleFactor = BitmapHelper.findScaleFactor(MAX_ART_WIDTH, MAX_ART_HEIGHT, is);
-                    Log.i(TAG, "Scaling bitmap " + artUrl + " by factor " + scaleFactor + " to support " +
-                            MAX_ART_HEIGHT + "x" + MAX_ART_HEIGHT + "requested dimension");
-                    try {
-                        is.reset();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                public void onComplete(@NonNull Task<byte[]> task) {
+                    if (task.isSuccessful()) {
+                        Bitmap[] bitmaps;//保存相应的bitmap和icon
+                        BufferedInputStream is = null;
+                        is = new BufferedInputStream(new ByteArrayInputStream(task.getResult()));
+                        is.mark(MAX_READ_LIMIT_PER_IMG);
+                        int scaleFactor = BitmapHelper.findScaleFactor(MAX_ART_WIDTH, MAX_ART_HEIGHT, is);
+                        Log.i(TAG, "Scaling bitmap " + artUrl + " by factor " + scaleFactor + " to support " +
+                                MAX_ART_HEIGHT + "x" + MAX_ART_HEIGHT + "requested dimension");
+                        try {
+                            is.reset();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        Bitmap bitmap = BitmapHelper.scaleBitmap(scaleFactor, is);
+                        Bitmap icon = BitmapHelper.scaleBitmap(bitmap,
+                                MAX_ART_WIDTH_ICON, MAX_ART_HEIGHT_ICON);
+                        bitmaps = new Bitmap[]{bitmap, icon};
+                        mCache.put(artUrl, bitmaps);
+
+                        Log.i(TAG, "doInBackground: putting bitmap in cache. cache size=" +
+                                mCache.size());
+
+                        Log.i(TAG, "keys od cache is :" + mCache.hitCount());
+
+                        listener.onFetched(artUrl,
+                                bitmaps[BIG_BITMAP_INDEX], bitmaps[ICON_BITMAP_INDEX]);
+                    } else {
+                        Log.e(TAG, "获取图片错误:" + task.getException().getMessage());
                     }
-                    Bitmap bitmap = BitmapHelper.scaleBitmap(scaleFactor, is);
-                    Bitmap icon = BitmapHelper.scaleBitmap(bitmap,
-                            MAX_ART_WIDTH_ICON, MAX_ART_HEIGHT_ICON);
-                    bitmaps = new Bitmap[]{bitmap, icon};
-                    mCache.put(artUrl, bitmaps);
-
-                    Log.i(TAG, "doInBackground: putting bitmap in cache. cache size=" +
-                            mCache.size());
-
-                    Log.i(TAG, "keys od cache is :" + mCache.hitCount());
-
-                    listener.onFetched(artUrl,
-                            bitmaps[BIG_BITMAP_INDEX], bitmaps[ICON_BITMAP_INDEX]);
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.e(TAG, "获取图像出错..." + e.getMessage());
-                    listener.onError(artUrl, new IllegalArgumentException("got null bitmaps"));
                 }
             });
         }
