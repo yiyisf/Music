@@ -542,6 +542,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private void startMain() {
         Intent i = new Intent(LoginActivity.this, MusicActivity.class);
+//        Intent i = new Intent(LoginActivity.this, ArtistActivity.class);
         startActivity(i);
         finish();
     }

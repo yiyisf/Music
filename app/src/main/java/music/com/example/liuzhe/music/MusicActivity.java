@@ -31,6 +31,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
+import music.com.example.liuzhe.music.ui.ArtistFragment;
 import music.com.example.liuzhe.music.ui.PlaybackControlsFragment;
 
 public class MusicActivity extends AppCompatActivity implements Thread.UncaughtExceptionHandler,
@@ -159,7 +160,8 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
             mControlsFragment.onConnected();
         }
 
-        getBrowseFragment().onConnected();
+        //暂时先取消处理
+//        getBrowseFragment().onConnected();
 
     }
 
@@ -173,8 +175,8 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
         checkLoginstatus();
         initializeToolbar();
 
-        mMediaBrowser = new MediaBrowserCompat(this,
-                new ComponentName(this, MusicService.class), mConnectionCallback, null);
+//        mMediaBrowser = new MediaBrowserCompat(this,
+//                new ComponentName(this, MusicService.class), mConnectionCallback, null);
 
         initializeFromParams(savedInstanceState, getIntent());
         Log.i(TAG, "after create view");
@@ -256,7 +258,22 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
             // If there is a saved media ID, use it
             mediaId = savedInstanceState.getString(SAVED_MEDIA_ID);
         }
-        navigateToBrowser(mediaId);
+//        navigateToBrowser(mediaId);
+        navigateToArtist();
+    }
+
+    private void navigateToArtist() {
+        ArtistFragment fragment = getArtistFragment();
+        if(fragment == null){
+            fragment = new ArtistFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.setCustomAnimations(
+                    R.animator.slide_in_from_right, R.animator.slide_out_to_left,
+                    R.animator.slide_in_from_left, R.animator.slide_out_to_right);
+            transaction.replace(R.id.container, fragment, FRAGMENT_TAG);
+
+            transaction.commit();
+        }
     }
 
     private void navigateToBrowser(String mediaId) {
@@ -334,7 +351,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     public void onMediaItemSelected(MediaBrowserCompat.MediaItem item) {
         //浏览处理,继续使用Browserfragment
         if (item.isBrowsable()) {
-            navigateToBrowser(item.getMediaId());
+//            navigateToBrowser(item.getMediaId());   //暂不处理browser fragment
         } else if (item.isPlayable()) {
             //直接播放，activity中已设置监听处理
             Log.i(TAG, "播放前状态是：" + getSupportMediaController().getPlaybackState().getState());
@@ -398,5 +415,8 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
 
     public BrowseFragment getBrowseFragment() {
         return (BrowseFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
+    }
+    public ArtistFragment getArtistFragment() {
+        return (ArtistFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
     }
 }

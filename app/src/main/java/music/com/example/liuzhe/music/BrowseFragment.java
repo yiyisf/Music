@@ -52,6 +52,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     private View errorView;
     private TextView errorMsgView;
     private ProgressBar mProgressBar;
+    private AlbumArtCache cache;
 
 
     private MediaControllerCompat.Callback mMediaControllerCallback =
@@ -203,7 +204,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
         errorMsgView = (TextView) errorView.findViewById(R.id.error_message);
         errorView.setVisibility(View.GONE);
         mProgressBar = (ProgressBar) root.findViewById(R.id.progressBar);
-
+        cache = AlbumArtCache.getInstance();
         ListView list_music = (ListView) root.findViewById(R.id.list_music);
         list_music.setAdapter(mBrowseAdapter);
         list_music.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -305,16 +306,16 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 //                new ImageDownloaderTask(holder.mImageView).execute(mArtUrl);
 //                显示歌手头像
                 if (holder.mImageView.getDrawable() == null) {
-                    final AlbumArtCache cache = AlbumArtCache.getInstance();
 //                if (art == null) {
 //                    final String mArtUrl = item.getDescription().getTitle().toString();
-                    final Bitmap art = cache.getIconImage(mArtUrl);
+                   Bitmap art = cache.getIconImage(mArtUrl);
 //                }
                     final ImageView mView = holder.mImageView;
                     if (art != null) {
                         mView.setImageBitmap(art);
                     } else {
 //                        cache.fetch(mArtUrl, new AlbumArtCache.FetchListener() {
+//
 //                                    @Override
 //                                    public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
 //                                        if (icon != null) {

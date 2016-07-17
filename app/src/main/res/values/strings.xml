@@ -30,4 +30,5 @@
     <string name="title_activity_register">注册</string>
     <string name="title_activity_login">登录</string>
     <string name="web_client_id">50073597837-8o0sstm2se5o01metrh9crs3u58ek6pv.apps.googleusercontent.com</string>
+    <string name="Artist_list">歌手列表</string>
 </resources>
