@@ -5,4 +5,6 @@
     <color name="colorAccent">#FF4081</color>
     <color name="bt_accent">#00B8D4</color>
     <color name="error_message_background">#ffff1600</color>
+
+    <color name="black_overlay">#66000000</color>
 </resources>

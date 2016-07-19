@@ -1,8 +1,6 @@
-package music.com.example.liuzhe.music;
+package music.com.example.liuzhe.music.util;
 
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 import android.support.v4.media.MediaMetadataCompat;
 import android.util.Log;
 
@@ -11,6 +9,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,14 +19,13 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import music.com.example.liuzhe.music.util.Artist;
-import music.com.example.liuzhe.music.util.Song;
+import music.com.example.liuzhe.music.MutableMediaMetadata;
 
 /**
- * Created by liuzhe on 2016/6/7.
+ * Created by liuzhe on 2016/7/18.
  */
-public class MusicProvider {
-    private static final String TAG = "MusicProvider";
+public class DiscoProvider {
+    private static final String TAG = "DiscoProvider";
 //    private static final String CATALOG_URL =
 //            "https://glowing-fire-3217.firebaseio.com/music.json";
 
@@ -41,15 +39,11 @@ public class MusicProvider {
     private static final String JSON_SOURCE = "source";
     private static final String JSON_NAME = "name";
 
-    private static MusicProvider provider = new MusicProvider();
+    private List<Song> Songlist;
 
-    private List<Artist> ArtistList;
-
-//    private ConcurrentMap<String, List<MediaMetadataCompat>> mMusicListByArtist;
-//    private ConcurrentMap<ArtistInfo, List<MediaMetadataCompat>> mMusicListByArtist;
-    private ConcurrentMap<String , Artist> mMusicListByArtist;
+    private ConcurrentMap<String, List<MediaMetadataCompat>> mMusicListByGenre;
     private final ConcurrentMap<String, MutableMediaMetadata> mMusicListById;
-    private static int song_no = 0;
+    private int song_no = 0;
 
     public MediaMetadataCompat getMusic(String id) {
         Log.i(TAG, "getmusic id is:" + id);
@@ -69,69 +63,37 @@ public class MusicProvider {
         void onMusicCatalogReady(boolean success);
     }
 
-    public static MusicProvider getInstence(){
-        return provider;
-    }
-
-    private MusicProvider() {
+    public DiscoProvider() {
         mMusicListById = new ConcurrentHashMap<>();
-        mMusicListByArtist = new ConcurrentHashMap<>();
+        mMusicListByGenre = new ConcurrentHashMap<>();
     }
 
     public boolean isInitialized() {
         return mCurrentState == State.INITIALIZED;
     }
 
-    public Iterable<String > getArtists() {
+    public Iterable<String> getGenres() {
         Log.i(TAG, "State is initialized ?" + String.valueOf((mCurrentState == State.INITIALIZED)));
         if (mCurrentState != State.INITIALIZED) {
             return Collections.emptyList();
         }
         //使用sortedset会将顺序排好，直接使用keyset顺序是乱的
-        SortedSet<String > temp = new TreeSet<>();
+        SortedSet<String> temp = new TreeSet<>();
 
-        for (String  i : mMusicListByArtist.keySet()) {
-            temp.add(i);
+        for(String t : mMusicListByGenre.keySet()){
+            temp.add(t);
         }
         return temp;
 
-//        return mMusicListByArtist.keySet();
+//        return mMusicListByGenre.keySet();
     }
 
-    public Uri getArtistImageUri(String artistName){
-        if (mCurrentState != State.INITIALIZED || !mMusicListByArtist.containsKey(artistName)) {
-            return null;
-        }
-
-        return Uri.parse(mMusicListByArtist.get(artistName).getPhotoUrl());
-    }
-
-    public Iterable<MediaMetadataCompat> getMusicsByArtistName(String artistName) {
-        if (mCurrentState != State.INITIALIZED || !mMusicListByArtist.containsKey(artistName)) {
+    public Iterable<MediaMetadataCompat> getMusicsByGenre(String gener) {
+        if (mCurrentState != State.INITIALIZED || !mMusicListByGenre.containsKey(gener)) {
             return Collections.emptyList();
         }
-        Log.i(TAG, "get by : " + artistName);
-        Artist a = mMusicListByArtist.get(artistName);
-        List<MediaMetadataCompat> list = new ArrayList<>();
-        for (Song song : a.getSongs()) {
-            MediaMetadataCompat item = buildFromSong(song, a.getName(), a.getPhotoUrl());
-            list.add(item);
 
-            String musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
-            MutableMediaMetadata temp = new MutableMediaMetadata(musicId, item);
-            mMusicListById.put(musicId, temp);
-        }
-
-        return list;
-    }
-
-    public Artist getArtistByArtistName(String artistName) {
-        if (mCurrentState != State.INITIALIZED || !mMusicListByArtist.containsKey(artistName)) {
-            return null;
-        }
-
-        return mMusicListByArtist.get(artistName);
-
+        return mMusicListByGenre.get(gener);
     }
 
     /**
@@ -154,7 +116,7 @@ public class MusicProvider {
 
 //                Log.i(TAG, "cat status is begin listening");
                 while (true) {
-                    if (mCurrentState == State.INITIALIZED) {
+                    if(mCurrentState == State.INITIALIZED) {
 //                        Log.i(TAG, "cat status is initialized");
                         return mCurrentState;
                     }
@@ -175,34 +137,20 @@ public class MusicProvider {
 
         if (mCurrentState == State.NON_INITIALIZED) {
             mCurrentState = State.INITIALIZING;
-
-//            fetchJSONFromUrl(null);
-
-            fetchJSONFromUrl(new forFirebaseCallBack() {
+            List<Song> tracks = fetchJSONFromUrl(new forFirebaseCallBack() {
                 @Override
-                public void onAdd(Artist a) {
-                    buildListsByArtist(a);
+                public void onAdd(Song song) {
+                    MediaMetadataCompat item = buildFromSong(song);
+                    String musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+                    MutableMediaMetadata temp = new MutableMediaMetadata(musicId, item);
+                    Log.i(TAG, "put song id :" + musicId);
+                    mMusicListById.put(musicId, temp);
+                    buildListsByGenre(temp);
                 }
             });
 
 
-//            //组装播放数据源
-//            for(Artist a: ArtistList){
-//                for(Song song:a.getSongs()) {
-//                    MediaMetadataCompat item = buildFromSong(song, a.getName(), a.getPhotoUrl());
-//                    list.add(item);
-//
-//                    String musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
-//                    MutableMediaMetadata temp = new MutableMediaMetadata(musicId, item);
-//                    mMusicListById.put(musicId, temp);
-//                }
-//                buildListsByArtist(a.getName(), list);
-//                Log.i(TAG, "put artist :" + a.getName());
-//            }
-
-//            mCurrentState = State.INITIALIZED; //完成数据源初始化
-
-
+            Log.i(TAG, "mCurrentState is INITIALIZED ");
 
 //                if (tracks.size() > 0) {
 //                    Log.i(TAG, "All " + tracks.size() + "songs");
@@ -214,7 +162,7 @@ public class MusicProvider {
 //                            mMusicListById.put(musicId, new MutableMediaMetadata(musicId, item));
 //                        }
 //                    }
-//                    buildListsByArtist();
+//                    buildListsByGenre();
 //                }
 //            mCurrentState = State.INITIALIZED;
         }
@@ -229,57 +177,61 @@ public class MusicProvider {
 
     }
 
-    private synchronized void buildListsByArtist(Artist a) {
-        mMusicListByArtist.putIfAbsent(a.getName(), a);
+    private synchronized void buildListsByGenre(MutableMediaMetadata compat) {
+//        ConcurrentMap<String, List<MediaMetadataCompat>> newMusicGenre =
+//                new ConcurrentHashMap<>();
+//        for(MutableMediaMetadata compat : mMusicListById.values()){
+        String genre = compat.mediaMetadataCompat.getString(MediaMetadataCompat.METADATA_KEY_GENRE);
+
+        List<MediaMetadataCompat> list = null;
+
+        list = mMusicListByGenre.get(genre);
+        if (list == null) {
+            list = new ArrayList<>();
+            mMusicListByGenre.put(genre, list);
+        }
+        list.add(compat.mediaMetadataCompat);
+
+//            if(list == null){
+//                list = new ArrayList<>();
+//                mMusicListByGenre.put(genre, list);
+//            }
+//             List<MediaMetadataCompat> list = newMusicGenre.get(genre);
+//            if(list == null){
+//                list = new ArrayList<>();
+//                newMusicGenre.put(genre, list);
+//            }
+//
+//            list.add(compat.mediaMetadataCompat);
+//        }
+//        mMusicListByGenre = newMusicGenre;
     }
 
-//    private synchronized void buildListsByGenre(MutableMediaMetadata compat) {
-////        ConcurrentMap<String, List<MediaMetadataCompat>> newMusicGenre =
-////                new ConcurrentHashMap<>();
-////        for(MutableMediaMetadata compat : mMusicListById.values()){
-//        String genre = compat.mediaMetadataCompat.getString(MediaMetadataCompat.METADATA_KEY_GENRE);
-//
-//        List<MediaMetadataCompat> list = null;
-//
-//        list = mMusicListByArtist.get(genre);
-//        if (list == null) {
-//            list = new ArrayList<>();
-//            mMusicListByArtist.put(genre, list);
-//        }
-//        list.add(compat.mediaMetadataCompat);
-//
-////            if(list == null){
-////                list = new ArrayList<>();
-////                mMusicListByArtist.put(genre, list);
-////            }
-////             List<MediaMetadataCompat> list = newMusicGenre.get(genre);
-////            if(list == null){
-////                list = new ArrayList<>();
-////                newMusicGenre.put(genre, list);
-////            }
-////
-////            list.add(compat.mediaMetadataCompat);
-////        }
-////        mMusicListByArtist = newMusicGenre;
-//    }
+    private List<Song> fetchJSONFromUrl(final forFirebaseCallBack callBack) {
+        Songlist = new ArrayList<>();
 
-    private void fetchJSONFromUrl(final forFirebaseCallBack callBack) {
-//        final List<Artist> list = new ArrayList<>();
-
-//        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("artists");
-        song_no = 0;
-
-        ref.addChildEventListener(new ChildEventListener() {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("music");
+        Query query = ref.limitToFirst(100);
+//        ref.startAt("a").limitToFirst(100);
+        Log.i(TAG, "link to firebase.......");
+        query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Artist a = dataSnapshot.getValue(Artist.class);
-                callBack.onAdd(a);
-                if (++song_no >= 961) {
-                    mCurrentState = State.INITIALIZED;
-                    Log.i(TAG, "mCurrentState is INITIALIZED ");
-                }
+//                Log.i(TAG, "the Song no :" + dataSnapshot.getKey());
+                song_no ++ ;
+                Song song = dataSnapshot.getValue(Song.class);
+//                Songlist.add(song);
+                callBack.onAdd(song);
 
+                if(song_no >= 100){
+                    mCurrentState = State.INITIALIZED;
+                }
+//                MediaMetadataCompat item = buildFromSong(song);
+//                String musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+//                MutableMediaMetadata temp = new MutableMediaMetadata(musicId, item);
+//                mMusicListById.put(musicId, temp);
+//                buildListsByGenre(temp);
             }
 
             @Override
@@ -302,21 +254,21 @@ public class MusicProvider {
 
             }
         });
+
+        return Songlist;
     }
-
-
 
     private interface forFirebaseCallBack {
-        void onAdd(Artist a);
+        void onAdd(Song song);
     }
 
-    @NonNull
-    private MediaMetadataCompat buildFromSong(Song song, String artist, String url) {
+    private MediaMetadataCompat buildFromSong(Song song) {
 //        String name = json.getString(JSON_NAME);
         String name = song.getSong_name();
+        String artist = "xxx";
         String genre = "Disco";
         String title = name;
-        String source = song.getSong_link();
+        String source = song.getSong_name();
 //
 //        // Media is stored relative to JSON file
 //        if (!source.startsWith("http")) {
@@ -332,14 +284,13 @@ public class MusicProvider {
         // Adding the music source to the MediaMetadata (and consequently using it in the
         // mediaSession.setMetadata) is not a good idea for a real world music app, because
         // the session metadata can be accessed by notification listeners. This is done in this
-        // 生成media metadata,暂以METADATA_KEY_ALBUM_ART_URI保存播放数据源的地址
+        // sample for convenience only.
         return new MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id)
-                .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, url)
                 .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, source)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
+                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                 .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, genre)
                 .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION, title)
                 .build();

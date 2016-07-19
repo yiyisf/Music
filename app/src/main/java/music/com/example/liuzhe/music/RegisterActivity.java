@@ -124,7 +124,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+//        getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
     private void populateAutoComplete() {

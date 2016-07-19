@@ -31,6 +31,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
@@ -59,8 +63,8 @@ public class ArtistFragment extends Fragment {
     private DatabaseReference mData;
     private RecyclerView recycler;
     private LinearLayoutManager mManager;
-    private FirebaseRecyclerAdapter mAdapter;
     private Query Aquery;
+    private FirebaseRecyclerAdapter<Artist, ArtistViewHoder> mAdapter;
 
     @Override
     public void onDetach() {
@@ -89,154 +93,65 @@ public class ArtistFragment extends Fragment {
 
         mData = FirebaseDatabase.getInstance().getReference().child("Artist");
 
-        Aquery = FirebaseDatabase.getInstance().getReference().child("Artist").limitToFirst(100);
+//        Aquery = FirebaseDatabase.getInstance().getReference().child("Artist").limitToFirst(100);
 
         recycler = (RecyclerView) root.findViewById(R.id.artist_list);
         recycler.setHasFixedSize(true);
-//        Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_container);
-//        toolbar.setTitle("歌手");
-        Log.i(TAG, "Created");
-        return root;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
         // Set up Layout Manager, reverse layout
         mManager = new LinearLayoutManager(getActivity());
-        mManager.setReverseLayout(true);
-        mManager.setStackFromEnd(true);
-        recycler.setLayoutManager(mManager);
+//        mManager.setReverseLayout(true);
+//        mManager.setStackFromEnd(true);
+
 
         // Set up FirebaseRecyclerAdapter with the Query
 //        Query postsQuery = getQuery(mData);
-        mAdapter = new FirebaseRecyclerAdapter<Artist, ArtistViewHoder>(Artist.class, R.layout.activity_artist,
-                ArtistViewHoder.class, mData) {
+        Log.i(TAG, "connect to firebase...");
+        Log.i(TAG, FirebaseAuth.getInstance().getCurrentUser().getEmail());
+
+        mAdapter = new FirebaseRecyclerAdapter<Artist, ArtistViewHoder>(
+                Artist.class,
+                R.layout.artist_item,
+                ArtistViewHoder.class,
+                mData) {
+            @Override
+            protected void populateViewHolder(ArtistViewHoder viewHolder, Artist model, int position) {
+                mProgressBar.setVisibility(ProgressBar.INVISIBLE);
+                Log.i(TAG, getItem(position).toString());
+                Log.i(TAG, getItem(position).getName());
+                viewHolder.nameView.setText(model.getName());
+//                viewHolder.bindToItem(model);
+
+            }
 
             @Override
-            protected void populateViewHolder(ArtistViewHoder viewHolder, Artist artist, int position) {
-                mProgressBar.setVisibility(ProgressBar.INVISIBLE);
-                viewHolder.bindToItem(artist);
+            public ArtistViewHoder onCreateViewHolder(ViewGroup parent, int viewType) {
+                Log.i(TAG, "create view hoder");
+                return super.onCreateViewHolder(parent, viewType);
+            }
+
+            @Override
+            public void onBindViewHolder(ArtistViewHoder viewHolder, int position) {
+                super.onBindViewHolder(viewHolder, position);
             }
         };
-        recycler.setAdapter(mAdapter);
-    }
 
-
-    // An adapter for showing the list of browsed MediaItem's
-    private class BrowseAdapter extends ArrayAdapter<MediaBrowserCompat.MediaItem> {
-
-
-        public BrowseAdapter(Context context) {
-            super(context, R.layout.media_list_item, new ArrayList<MediaBrowserCompat.MediaItem>());
-        }
-
-        class ViewHolder {
-            ImageView mImageView;
-            TextView mTitleView;
-            TextView mDescriptionView;
-        }
-
-        //        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            mProgressBar.setVisibility(ProgressBar.INVISIBLE);
-            ViewHolder holder;
-
-            if (convertView == null) {
-                convertView = LayoutInflater.from(getContext())
-                        .inflate(R.layout.media_list_item, parent, false);
-                holder = new ViewHolder();
-                holder.mImageView = (ImageView) convertView.findViewById(R.id.play_eq);
-//                holder.mImageView.setVisibility(View.GONE);
-                holder.mTitleView = (TextView) convertView.findViewById(R.id.title);
-                holder.mDescriptionView = (TextView) convertView.findViewById(R.id.description);
-                holder.mDescriptionView.setVisibility(View.GONE);
-                convertView.setTag(holder);
-            } else {
-//                Log.i(TAG, "加载已创建的view：" + position);
-                holder = (ViewHolder) convertView.getTag();
-            }
-
-
-            MediaBrowserCompat.MediaItem item = getItem(position);
-            holder.mTitleView.setText(item.getDescription().getTitle());
-            Log.i(TAG, "list view 记载第" + position + "各item" + item.getDescription().getTitle() + (holder.mImageView.getDrawable() == null));
-            if (item.isPlayable()) {
-                holder.mDescriptionView.setVisibility(View.VISIBLE);
-                holder.mDescriptionView.setText(item.getDescription().getSubtitle());
-                ViewGroup.LayoutParams params = holder.mImageView.getLayoutParams();
-                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                holder.mImageView.setLayoutParams(params);
-
-                holder.mImageView.setImageDrawable(
-                        getContext().getResources().getDrawable(R.drawable.ic_play_arrow_red_24dp));
-                holder.mImageView.setVisibility(View.VISIBLE);
-
-                MediaControllerCompat controller = ((AppCompatActivity) getContext())
-                        .getSupportMediaController();
-                if (controller != null && controller.getMetadata() != null && controller.getPlaybackState() != null) {
-                    String currentPlaying = controller.getMetadata().getDescription().getMediaId();
-                    String musicId = MediaIDHelper.extractMusicIDFromMediaID(
-                            item.getDescription().getMediaId());
-                    if (currentPlaying != null && currentPlaying.equals(musicId)) {
-                        switch (controller.getPlaybackState().getState()) {
-                            case PlaybackStateCompat.STATE_PLAYING:
-                                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_equalizer_red_24dp));
-                                break;
-                            case PlaybackStateCompat.STATE_PAUSED:
-                                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_play_arrow_red_24dp));
-                                break;
-                            case PlaybackStateCompat.STATE_BUFFERING:
-                                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_autorenew_red_24dp));
-                                break;
-                            default:
-                                holder.mImageView.setVisibility(View.GONE);
-                                break;
-                        }
-                    }
-                }
-            } else {
-//                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
-                String mArtUrl = item.getDescription().getTitle().toString();
-//                new ImageDownloaderTask(holder.mImageView).execute(mArtUrl);
-//                显示歌手头像
-                if (holder.mImageView.getDrawable() == null) {
-//                if (art == null) {
-//                    final String mArtUrl = item.getDescription().getTitle().toString();
-                    Bitmap art = cache.getIconImage(mArtUrl);
-//                }
-                    final ImageView mView = holder.mImageView;
-                    if (art != null) {
-                        mView.setImageBitmap(art);
-                    } else {
-//                        cache.fetch(mArtUrl, new AlbumArtCache.FetchListener() {
+//        mAdapter = new FirebaseRecyclerAdapter<Artist, ArtistViewHoder>(
+//                Artist.class,
+//                R.layout.activity_artist,
+//                ArtistViewHoder.class,
+//                mData) {
 //
-//                                    @Override
-//                                    public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
-//                                        if (icon != null) {
-//                                            Log.i(TAG, "设置" + artUrl + "的图片" + "postion:" + position);
-////                                        if (isActive()) {
-//                                            mView.setImageBitmap(icon);
-////                                        }
-//                                        }
-//                                    }
-//                                    @Override
-//                                    public void onError(String artUrl, Exception e) {
-//                                        mView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
-//                                    }
-//                                }
-//                        );
-                    }
-                }
+//            @Override
+//            protected void populateViewHolder(ArtistViewHoder viewHolder, Artist artist, int position) {
+//                Log.i(TAG, artist.getName());
+////                viewHolder.bindToItem(artist);
+//            }
+//        };
 
-            }
-            return convertView;
-        }
-
-
+        recycler.setLayoutManager(mManager);
+        recycler.setAdapter(mAdapter);
+        Log.i(TAG, "Created");
+        return root;
     }
 
     private void checkForUserVisibleErrors(boolean forceError) {

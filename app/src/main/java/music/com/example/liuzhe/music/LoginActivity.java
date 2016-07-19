@@ -93,18 +93,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if(user!=null){
-//                    startMain();
-                    Log.i("登录", "登录成功...");
-                }
-            }
-        };
-
-        mAuth.addAuthStateListener(mAuthListener);
+//        mAuthListener = new FirebaseAuth.AuthStateListener() {
+//            @Override
+//            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+//                FirebaseUser user = firebaseAuth.getCurrentUser();
+//                if(user!=null){
+////                    startMain();
+//                    Log.i("登录", "登录成功...");
+//                }
+//            }
+//        };
+//
+//        mAuth.addAuthStateListener(mAuthListener);
         setContentView(R.layout.activity_login);
         gso = MusicApplication.getGoogleSignInOptions();
 
@@ -158,6 +158,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         if (user != null) {
 //            Toast.makeText(this, "已登录firebase user：" + auth.getAuth().get("token"), Toast.LENGTH_SHORT).show();
+            Log.i("登录", "成功 .. 1");
             startMain();
         }
     }
@@ -272,6 +273,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                         showProgress(false);
                         if(task.isSuccessful()){
                             Toast.makeText(LoginActivity.this, "登陆" + email + "成功！", Toast.LENGTH_SHORT).show();
+                            Log.i("登录", "成功 .. 2");
                             startMain();
                         }else {
                             Toast.makeText(LoginActivity.this, "登陆失败: " + ((task.getException().getLocalizedMessage()==null)?"":task.getException().getLocalizedMessage())
@@ -450,6 +452,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                 }
                         );
                     }
+                    Log.i("登录", "成功 .. 3");
                     startMain();
                 }
             }
@@ -531,6 +534,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 //            startMain();
 //        }
 //
+//        @Override
 //        @Override
 //        public void onAuthenticationError(FirebaseError firebaseError) {
 //

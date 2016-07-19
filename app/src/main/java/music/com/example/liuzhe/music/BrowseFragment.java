@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -29,12 +30,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import music.com.example.liuzhe.music.util.AlbumArtCache;
+import music.com.example.liuzhe.music.util.Artist;
 import music.com.example.liuzhe.music.util.MediaIDHelper;
 import music.com.example.liuzhe.music.util.NetworkHelper;
 
@@ -82,6 +86,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         Log.i(TAG, "设置接口");
+
         mFragmentListenr = (FragmentDataHelper) activity;
     }
 
@@ -94,10 +99,13 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 
     //链接成功处理
     public void onConnected() {
+        Log.i(TAG, "isDetached ?" + isDetached());
         if (isDetached()) {
             return;
         }
+        //如无歌手id,则获取所有歌手
         mMediaId = getMediaId();
+        Log.i(TAG, "get mid id:" + (mMediaId==null ? "null": mMediaId));
         if (mMediaId == null) {
             mMediaId = mFragmentListenr.getMediaBrowser().getRoot();
         }
@@ -111,12 +119,35 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
             controller.registerCallback(mMediaControllerCallback);
         }
 
+        updateTitle();
+
+    }
+
+    private void updateTitle() {
+        if(mMediaId.equals(MusicService.MEDIA_ID_ROOT)){
+            mFragmentListenr.setToolbarTitle(null);
+            return;
+        }
+
+        if(android.os.Build.VERSION.SDK_INT >= 23) {
+            MediaBrowserCompat mediaBrowser = mFragmentListenr.getMediaBrowser();
+            mediaBrowser.getItem(mMediaId, new MediaBrowserCompat.ItemCallback() {
+                @Override
+                public void onItemLoaded(MediaBrowserCompat.MediaItem item) {
+                    mFragmentListenr.setToolbarTitle(
+                            item.getDescription().getTitle());
+                }
+            });
+        }else {
+            mFragmentListenr.setToolbarTitle(mMediaId.split("/")[1]);
+        }
     }
 
     public void setMediaId(String mediaId) {
         Bundle args = new Bundle(1);
         args.putString(ARG_MEDIA_ID, mediaId);
         setArguments(args);
+        Log.i(TAG, "set mid id:" + mediaId);
     }
 
     public String getMediaId() {
@@ -136,6 +167,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     //提供接口处理点击事件
     public interface FragmentDataHelper extends MediaBrowserProvider {
         void onMediaItemSelected(MediaBrowserCompat.MediaItem item);
+        void setToolbarTitle(CharSequence title);
     }
 
     private MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback =
@@ -172,7 +204,9 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
                 "  onConnected=" + mediaBrowser.isConnected());
 
         if (mediaBrowser.isConnected()) {
+            Log.i(TAG, "before setting title");
             onConnected();
+            Log.i(TAG, "after setting title");
         }
 //        showProgressDialog();
     }
@@ -210,11 +244,19 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
         list_music.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.i(TAG, "click for play, get activity is :" + getActivity());
+//                Log.i(TAG, "click for play, get activity is :" + getActivity());
                 checkForUserVisibleErrors(false);
                 MediaBrowserCompat.MediaItem item = mBrowseAdapter.getItem(position);
-//                mFragmentListenr = (FragmentDataHelper) getActivity();
-                mFragmentListenr.onMediaItemSelected(item);
+//                mFragmentListenr.onMediaItemSelected(item);
+
+//                以新的activity显示
+                Artist a = MusicProvider.getInstence().getArtistByArtistName(item.getDescription().getTitle().toString());
+                Log.i(TAG, "start display songs:" + a.getSongs().toString());
+                Intent i = new Intent(getActivity(), SongsActivity.class);
+
+                i.putExtra("artist", a);
+                getActivity().overridePendingTransition(R.animator.slide_in_from_right, R.animator.slide_out_to_left);
+                startActivity(i);
             }
         });
 
@@ -264,7 +306,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 
             MediaBrowserCompat.MediaItem item = getItem(position);
             holder.mTitleView.setText(item.getDescription().getTitle());
-            Log.i(TAG, "list view 记载第" + position + "各item" + item.getDescription().getTitle() + (holder.mImageView.getDrawable() == null));
+
             if (item.isPlayable()) {
                 holder.mDescriptionView.setVisibility(View.VISIBLE);
                 holder.mDescriptionView.setText(item.getDescription().getSubtitle());
@@ -301,38 +343,9 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
                     }
                 }
             } else {
-//                holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
-                String mArtUrl = item.getDescription().getTitle().toString();
-//                new ImageDownloaderTask(holder.mImageView).execute(mArtUrl);
-//                显示歌手头像
-                if (holder.mImageView.getDrawable() == null) {
-//                if (art == null) {
-//                    final String mArtUrl = item.getDescription().getTitle().toString();
-                   Bitmap art = cache.getIconImage(mArtUrl);
-//                }
-                    final ImageView mView = holder.mImageView;
-                    if (art != null) {
-                        mView.setImageBitmap(art);
-                    } else {
-//                        cache.fetch(mArtUrl, new AlbumArtCache.FetchListener() {
-//
-//                                    @Override
-//                                    public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
-//                                        if (icon != null) {
-//                                            Log.i(TAG, "设置" + artUrl + "的图片" + "postion:" + position);
-////                                        if (isActive()) {
-//                                            mView.setImageBitmap(icon);
-////                                        }
-//                                        }
-//                                    }
-//                                    @Override
-//                                    public void onError(String artUrl, Exception e) {
-//                                        mView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
-//                                    }
-//                                }
-//                        );
-                    }
-                }
+                Glide.with(getActivity())
+                        .load(item.getDescription().getIconUri())
+                        .into(holder.mImageView);
 
             }
             return convertView;
@@ -385,6 +398,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
             } else if (forceError) {
                 // Finally, if the caller requested to show error, show a generic message:
                 errorMsgView.setText(R.string.error_loading_media);
+                mProgressBar.setVisibility(ProgressBar.INVISIBLE);
                 showError = true;
             }
         }
@@ -394,47 +408,5 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 //                " isOnline=" + NetworkHelper.isOnline(getActivity()));
     }
 }
-//    private class ImageDownloaderTask extends AsyncTask<String, Void, Bitmap> {
-//        private final WeakReference<ImageView> imageViewWeakReference;
-//
-//        public ImageDownloaderTask(ImageView imageView) {
-//            imageViewWeakReference = new WeakReference<ImageView>(imageView);
-//        }
-//
-//
-//        @Override
-//        protected Bitmap doInBackground(final String... params) {
-//            final AlbumArtCache cache = AlbumArtCache.getInstance();
-//            Bitmap art = cache.getIconImage(params[0]);
-//
-//            ImageView mView = imageViewWeakReference.get();
-//            if (art != null) {
-//                Log.i(TAG, "内存中取到了：" + params[0]);
-////                mView.setImageBitmap(art);
-//            } else {
-//                Log.i(TAG, "内存没有取到：" + params[0]);
-//                cache.fetch(params[0], new AlbumArtCache.FetchListener() {
-//                            @Override
-//                            public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
-//                                if (icon != null) {
-//                                    Log.i(TAG, "album art icon of w=" + icon.getWidth() +
-//                                            " h=" + icon.getHeight());
-////                                        if (isActive()) {
-////                                    mView.setImageBitmap(cache.getIconImage(params[0]));
-////                                        }
-//                                }
-//                            }
-//
-//                            @Override
-//                            public void onError(String artUrl, Exception e) {
-////                                mView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_default_artist));
-//                                Log.e(TAG, "加载图标出错");
-//                            }
-//                        }
-//                );
-//                return null;
-//            }
-//
-//        }
-//    }
+
 

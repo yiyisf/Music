@@ -31,6 +31,11 @@
         android:layout_below="@+id/playback_error"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+    <!--<android.support.v4.widget.SwipeRefreshLayout-->
+        <!--android:id="@+id/list_music"-->
+        <!--android:layout_below="@+id/playback_error"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content" />-->
 
     <ProgressBar
         style="?android:attr/progressBarStyleLargeInverse"

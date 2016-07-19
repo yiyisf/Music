@@ -96,6 +96,46 @@ public final class AlbumArtCache {
         return result == null ? null : result[ICON_BITMAP_INDEX];
     }
 
+    public void fetchFromUrl(final String url, final FetchListener listener){
+
+        Bitmap[] bitmap = mCache.get(url);
+        //检查是否已经缓存，如已经缓存，则直接返回
+        if (bitmap != null) {
+            Log.i(TAG, "getOrFetch: album art is in cache, using it" + url);
+            listener.onFetched(url, bitmap[BIG_BITMAP_INDEX], null);
+            return;
+        }
+        new AsyncTask<Void, Void, Bitmap[]>() {
+            @Override
+            protected Bitmap[] doInBackground(Void[] objects) {
+                Bitmap[] bitmaps;
+                try {
+                    Bitmap bitmap = BitmapHelper.fetchAndRescaleBitmap(url,
+                        MAX_ART_WIDTH, MAX_ART_HEIGHT);
+                    Bitmap icon = BitmapHelper.scaleBitmap(bitmap,
+                        MAX_ART_WIDTH_ICON, MAX_ART_HEIGHT_ICON);
+                    bitmaps = new Bitmap[] {bitmap, icon};
+                    mCache.put(url, bitmaps);
+                } catch (IOException e) {
+                    return null;
+                }
+                Log.d(TAG, "doInBackground: putting bitmap in cache. cache size=" +
+                    mCache.size());
+                return bitmaps;
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap[] bitmaps) {
+                if (bitmaps == null) {
+                    listener.onError(url, new IllegalArgumentException("got null bitmaps"));
+                } else {
+                    listener.onFetched(url,
+                        bitmaps[BIG_BITMAP_INDEX], bitmaps[ICON_BITMAP_INDEX]);
+                }
+            }
+        }.execute();
+    }
+
     public void fetch(final String artUrl, final FetchListener listener) {
         // WARNING: for the sake of simplicity, simultaneous multi-thread fetch requests
         // are not handled properly: they may cause redundant costly operations, like HTTP

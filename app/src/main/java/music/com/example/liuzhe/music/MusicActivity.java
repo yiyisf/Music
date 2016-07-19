@@ -20,21 +20,17 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
-import music.com.example.liuzhe.music.ui.ArtistFragment;
 import music.com.example.liuzhe.music.ui.PlaybackControlsFragment;
+import music.com.example.liuzhe.music.util.NetworkHelper;
 
-public class MusicActivity extends AppCompatActivity implements Thread.UncaughtExceptionHandler,
+public class MusicActivity extends BaseActivity implements Thread.UncaughtExceptionHandler,
         BrowseFragment.FragmentDataHelper {
 
     private static final String TAG = "Main Activity";
@@ -103,13 +99,13 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            FirebaseAuth.getInstance().signOut();
-        }
-
-        if (MusicApplication.getGoogleSignInAccount() != null && MusicApplication.getmGoogleApiClient().isConnected()) {
-            Auth.GoogleSignInApi.signOut(MusicApplication.getmGoogleApiClient());
-        }
+//        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+//            FirebaseAuth.getInstance().signOut();
+//        }
+//
+//        if (MusicApplication.getGoogleSignInAccount() != null && MusicApplication.getmGoogleApiClient().isConnected()) {
+//            Auth.GoogleSignInApi.signOut(MusicApplication.getmGoogleApiClient());
+//        }
 
     }
 
@@ -161,7 +157,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
         }
 
         //暂时先取消处理
-//        getBrowseFragment().onConnected();
+        getBrowseFragment().onConnected();
 
     }
 
@@ -175,12 +171,13 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
         checkLoginstatus();
         initializeToolbar();
 
-//        mMediaBrowser = new MediaBrowserCompat(this,
-//                new ComponentName(this, MusicService.class), mConnectionCallback, null);
+        mMediaBrowser = new MediaBrowserCompat(this,
+                new ComponentName(this, MusicService.class), mConnectionCallback, null);
 
         initializeFromParams(savedInstanceState, getIntent());
         Log.i(TAG, "after create view");
     }
+
 
     private void checkLoginstatus() {
 //        gso = MusicApplication.getGoogleSignInOptions();
@@ -201,7 +198,6 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
 //            Toast.makeText(this, "已登录firebase user：" + auth.getAuth().get("token"), Toast.LENGTH_SHORT).show();
             startLogin();
         }
-//        }
     }
 
     private void startLogin() {
@@ -236,6 +232,7 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
         if (mDrawerToggle == null) {
             return;
         }
+        Log.i(TAG, "count od fragment now:" + getFragmentManager().getBackStackEntryCount());
         boolean isRoot = getFragmentManager().getBackStackEntryCount() == 0;
         mDrawerToggle.setDrawerIndicatorEnabled(isRoot);
         if (getSupportActionBar() != null) {
@@ -258,23 +255,23 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
             // If there is a saved media ID, use it
             mediaId = savedInstanceState.getString(SAVED_MEDIA_ID);
         }
-//        navigateToBrowser(mediaId);
-        navigateToArtist();
+        navigateToBrowser(mediaId);
+//        navigateToArtist();
     }
 
-    private void navigateToArtist() {
-        ArtistFragment fragment = getArtistFragment();
-        if(fragment == null){
-            fragment = new ArtistFragment();
-            FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.setCustomAnimations(
-                    R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                    R.animator.slide_in_from_left, R.animator.slide_out_to_right);
-            transaction.replace(R.id.container, fragment, FRAGMENT_TAG);
-
-            transaction.commit();
-        }
-    }
+//    private void navigateToArtist() {
+//        ArtistFragment fragment = getArtistFragment();
+//        if(fragment == null){
+//            fragment = new ArtistFragment();
+//            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+//            transaction.setCustomAnimations(
+//                    R.animator.slide_in_from_right, R.animator.slide_out_to_left,
+//                    R.animator.slide_in_from_left, R.animator.slide_out_to_right);
+//            transaction.replace(R.id.container, fragment, FRAGMENT_TAG);
+//
+//            transaction.commit();
+//        }
+//    }
 
     private void navigateToBrowser(String mediaId) {
         Log.i(TAG, "to browser meids : " + mediaId);
@@ -320,11 +317,11 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
         getFragmentManager().addOnBackStackChangedListener(mBackStackChangedListener);
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Log.i(TAG, "点击率返回键");
-    }
+//    @Override
+//    public void onBackPressed() {
+//        super.onBackPressed();
+//        Log.i(TAG, "点击率返回键");
+//    }
 
     @Override
     protected void onPause() {
@@ -342,6 +339,12 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     }
 
     @Override
+    public void setTitle(CharSequence title) {
+        super.setTitle(title);
+        mToolbar.setTitle(title);
+    }
+
+    @Override
     public void uncaughtException(Thread thread, Throwable ex) {
         ex.printStackTrace();
     }
@@ -351,31 +354,36 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
     public void onMediaItemSelected(MediaBrowserCompat.MediaItem item) {
         //浏览处理,继续使用Browserfragment
         if (item.isBrowsable()) {
-//            navigateToBrowser(item.getMediaId());   //暂不处理browser fragment
+            navigateToBrowser(item.getMediaId());
         } else if (item.isPlayable()) {
             //直接播放，activity中已设置监听处理
-            Log.i(TAG, "播放前状态是：" + getSupportMediaController().getPlaybackState().getState());
-            Log.i(TAG, "启动播放" + item.getDescription().getTitle());
-            getSupportMediaController().getTransportControls().playFromMediaId(item.getMediaId(), null);
-            Log.i(TAG, "播放后状态是：" + getSupportMediaController().getPlaybackState().getState());
-            ;
+            getSupportMediaController().getTransportControls().
+                    playFromMediaId(item.getMediaId(), null);
         }
+    }
+
+    @Override
+    public void setToolbarTitle(CharSequence title) {
+        if(title==null) {
+            title = getString(R.string.app_name);
+        }
+        Log.i(TAG, "set title is:" + title);
+        setTitle(title);
     }
 
     protected void showPlaybackControls() {
         Log.i(TAG, "showPlaybackControls");
-//        if (NetworkHelper.isOnline(this)) {
-        getFragmentManager().beginTransaction()
-                .setCustomAnimations(
-                        R.animator.slide_in_from_bottom, R.animator.slide_out_to_bottom,
-                        R.animator.slide_in_from_bottom, R.animator.slide_out_to_bottom)
-                .show(mControlsFragment)
-                .commit();
-//        }
+        if (NetworkHelper.isOnline(this)) {
+            getFragmentManager().beginTransaction()
+                    .setCustomAnimations(
+                            R.animator.slide_in_from_bottom, R.animator.slide_out_to_bottom,
+                            R.animator.slide_in_from_bottom, R.animator.slide_out_to_bottom)
+                    .show(mControlsFragment)
+                    .commit();
+        }
     }
 
     protected void hidePlaybackControls() {
-        Log.i(TAG, "hidePlaybackControls");
         getFragmentManager().beginTransaction()
                 .hide(mControlsFragment)
                 .commit();
@@ -398,8 +406,6 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
         if (mediaController == null ||
                 mediaController.getMetadata() == null ||
                 mediaController.getPlaybackState() == null) {
-//            Log.i(TAG, "播放内容为null? "+ String.valueOf(mediaController == null));
-//            Log.i(TAG, "播放状态为null? "+ String.valueOf(mediaController == null));
             return false;
         }
 
@@ -415,8 +421,5 @@ public class MusicActivity extends AppCompatActivity implements Thread.UncaughtE
 
     public BrowseFragment getBrowseFragment() {
         return (BrowseFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
-    }
-    public ArtistFragment getArtistFragment() {
-        return (ArtistFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
     }
 }

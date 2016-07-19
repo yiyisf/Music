@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -35,6 +36,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
+import music.com.example.liuzhe.music.FullscreenActivity;
 import music.com.example.liuzhe.music.MusicService;
 import music.com.example.liuzhe.music.R;
 import music.com.example.liuzhe.music.util.AlbumArtCache;
@@ -92,17 +96,17 @@ public class PlaybackControlsFragment extends Fragment implements Thread.Uncaugh
         rootView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //全屏显示，暂不处理
-//                Intent intent = new Intent(getActivity(), FullScreenPlayerActivity.class);
-//                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-//                MediaControllerCompat controller = ((FragmentActivity) getActivity())
-//                        .getSupportMediaController();
-//                MediaMetadataCompat metadata = controller.getMetadata();
-//                if (metadata != null) {
-//                    intent.putExtra(MusicPlayerActivity.EXTRA_CURRENT_MEDIA_DESCRIPTION,
-//                        metadata.getDescription());
-//                }
-//                startActivity(intent);
+//                全屏显示，暂不处理
+                Intent intent = new Intent(getActivity(), FullscreenActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                MediaControllerCompat controller = ((FragmentActivity) getActivity())
+                        .getSupportMediaController();
+                MediaMetadataCompat metadata = controller.getMetadata();
+                if (metadata != null) {
+                    intent.putExtra("metadata",
+                            metadata.getDescription());
+                }
+                startActivity(intent);
             }
         });
         return rootView;
@@ -155,42 +159,10 @@ public class PlaybackControlsFragment extends Fragment implements Thread.Uncaugh
         Log.i(TAG, "music srouce : " + metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI));
         mTitle.setText(metadata.getDescription().getTitle());
         mSubtitle.setText(metadata.getDescription().getSubtitle());
-//        mAlbumArt.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.ic_default_artist));
-        String artUrl = null;
-        if (metadata.getDescription().getSubtitle() != null) {
-            artUrl = metadata.getDescription().getSubtitle().toString();
-        }
-        if (!TextUtils.equals(artUrl, mArtUrl)) {
-            mArtUrl = artUrl;
-            Bitmap art = metadata.getDescription().getIconBitmap();
-            cache = AlbumArtCache.getInstance();
-            if (art == null) {
-                art = cache.getIconImage(mArtUrl);
-            }
-            if (art != null) {
-                mAlbumArt.setImageBitmap(art);
-            } else {
-                cache.fetch(artUrl, new AlbumArtCache.FetchListener() {
-                            @Override
-                            public void onFetched(String artUrl, Bitmap bitmap, Bitmap icon) {
-                                if (icon != null) {
-                                    Log.i(TAG, "album art icon of w=" + icon.getWidth() +
-                                            " h=" + icon.getHeight());
-                                    if (isAdded()) {
-                                        mAlbumArt.setImageBitmap(icon);
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onError(String artUrl, Exception e) {
-                                mAlbumArt.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.ic_default_artist));
-                                Log.e(TAG, "加载图标出错");
-                            }
-                        }
-                );
-            }
-        }
+//      设置图片
+        Glide.with(getActivity())
+                .load(metadata.getDescription().getIconUri())
+                .into(mAlbumArt);
     }
 
     public void setExtraInfo(String extraInfo) {

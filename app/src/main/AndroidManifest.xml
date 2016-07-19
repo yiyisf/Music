@@ -28,7 +28,13 @@
         <activity
             android:name=".RegisterActivity"
             android:label="@string/title_activity_register"
-            android:parentActivityName=".LoginActivity" />
+            android:parentActivityName=".LoginActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".LoginActivity"/>
+        </activity>
+
+
         <activity
             android:name=".LoginActivity"
             android:label="@string/action_sign_in" />
@@ -36,7 +42,7 @@
         <service
             android:name=".MusicService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
 
         <receiver android:name="android.support.v4.media.session.MediaButtonReceiver">
             <intent-filter>
@@ -46,7 +52,20 @@
 
         <activity
             android:name=".ArtistActivity"
-            android:label="@string/Artist_list">
+            android:label="@string/Artist_list" />
+        <activity
+            android:name=".FullscreenActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_fullscreen"
+            android:theme="@style/FullscreenTheme" />
+        <activity
+            android:name=".SongsActivity"
+            android:label="@string/title_activity_songs"
+            android:parentActivityName=".ArtistActivity"
+            android:theme="@style/AppTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="music.com.example.liuzhe.music.ArtistActivity" />
         </activity>
     </application>
 

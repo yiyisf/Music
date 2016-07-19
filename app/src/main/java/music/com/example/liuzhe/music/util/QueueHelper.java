@@ -15,24 +15,24 @@ import music.com.example.liuzhe.music.MusicProvider;
  * Created by liuzhe on 2016/6/8.
  */
 public class QueueHelper {
-    public static final String MEDIA_ID_MUSICS_BY_GENRE = "__BY_GENRE__";
+    public static final String MEDIA_ID_MUSICS_BY_ARTIST = "__BY_ARTIST__";
     public static final String MEDIA_ID_MUSICS_BY_SEARCH = "__BY_SEARCH__";
     private static final String TAG = "QueueHelper";
 
 
     public static List<MediaSessionCompat.QueueItem> getRandomQueue(MusicProvider provider) {
         //获取基本信息
-        Iterator<String> iterator = provider.getGenres().iterator();
+        Iterator<String > iterator = provider.getArtists().iterator();
         //检查是否为空,若为空则返回一个空list
         if(!iterator.hasNext()){
             return Collections.emptyList();
         }
 
-        String gener = iterator.next();
-        Log.i(TAG, "iterator gerner is :" + gener);
-        Iterable<MediaMetadataCompat> tracks = provider.getMusicsByGenre(gener);
+        String artistname = iterator.next();
+        Log.i(TAG, "iterator gerner is :" + artistname);
+        Iterable<MediaMetadataCompat> tracks = provider.getMusicsByArtistName(artistname);
         Log.i(TAG, "get all gener is :" + tracks);
-        return convertToQueue(tracks, MEDIA_ID_MUSICS_BY_GENRE, gener);
+        return convertToQueue(tracks, MEDIA_ID_MUSICS_BY_ARTIST, artistname);
     }
 
     private static List<MediaSessionCompat.QueueItem> convertToQueue(
@@ -82,8 +82,8 @@ public class QueueHelper {
 
         Iterable<MediaMetadataCompat> tracks = null;
         // This sample only supports genre and by_search category types.
-        if (categoryType.equals(MEDIA_ID_MUSICS_BY_GENRE)) {
-            tracks = provider.getMusicsByGenre(categoryValue);
+        if (categoryType.equals(MEDIA_ID_MUSICS_BY_ARTIST)) {
+            tracks = provider.getMusicsByArtistName(categoryValue);
         }
 //        } else if (categoryType.equals(MEDIA_ID_MUSICS_BY_SEARCH)) {
 //            tracks = provider.searchMusicBySongTitle(categoryValue);
