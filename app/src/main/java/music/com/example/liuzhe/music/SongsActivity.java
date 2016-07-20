@@ -17,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -109,16 +110,12 @@ public class SongsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_songs);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         artist = getIntent().getParcelableExtra("artist");
         setTitle(artist.getName());
 
         songs = artist.getSongs();
 
-//        AppBarLayout barLayout = (AppBarLayout) findViewById(R.id.app_bar);
-
-//        Bitmap bitmap= ;
-//        Drawable drawable = new GlideBitmapDrawable(null, bitmap);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,7 +125,6 @@ public class SongsActivity extends AppCompatActivity {
 //                        .setAction("Action", null).show();
             }
         });
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         SongListView song_list = (SongListView) findViewById(R.id.song_list);
 
@@ -193,7 +189,7 @@ public class SongsActivity extends AppCompatActivity {
             MediaBrowserCompat.MediaItem item = getItem(position);
             holder.mTitleView.setText(item.getDescription().getTitle().toString());
             holder.mDescriptionView.setText(artist.getName());
-            holder.mImageView.setImageDrawable(getDrawable(R.drawable.ic_play_arrow_red_24dp));
+            holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_play_arrow_red_24dp));
 
             MediaControllerCompat controller = getSupportMediaController();
             //如存在播放曲目及播放状态
@@ -205,14 +201,14 @@ public class SongsActivity extends AppCompatActivity {
                 if (currentPlaying != null && currentPlaying.equals(musicId)) {
                     switch (controller.getPlaybackState().getState()) {
                         case PlaybackStateCompat.STATE_BUFFERING:  //正在加载
-                            holder.mImageView.setImageDrawable(getDrawable(R.drawable.ic_autorenew_red_24dp));
+                            holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_autorenew_red_24dp));
 //                            fab.setImageDrawable(getDrawable(R.drawable.ic_play_arrow_red_24dp));
                             break;
                         case PlaybackStateCompat.STATE_PLAYING:    //正在播放
-                            holder.mImageView.setImageDrawable(getDrawable(R.drawable.ic_equalizer_red_24dp));
+                            holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_equalizer_red_24dp));
                             break;
                         case PlaybackStateCompat.STATE_PAUSED:     //正在暂停
-                            holder.mImageView.setImageDrawable(getDrawable(R.drawable.ic_play_arrow_red_24dp));
+                            holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_play_arrow_red_24dp));
                             break;
                         case PlaybackStateCompat.STATE_NONE:       //未知状态
                             break;
@@ -249,5 +245,17 @@ public class SongsActivity extends AppCompatActivity {
         if (getSupportMediaController() != null) {
             getSupportMediaController().unregisterCallback(ControlCallBack);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == android.R.id.home){
+            Log.i(TAG, "监听到返回按钮");
+            finish();
+        }
+
+        return true;
+
+//        return super.onOptionsItemSelected(item);
     }
 }

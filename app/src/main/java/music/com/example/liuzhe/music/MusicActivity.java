@@ -92,9 +92,8 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
                     }
                 }
             };
-    private Toolbar mToolbar;
-    private DrawerLayout mDrawerLayout;
-    private ActionBarDrawerToggle mDrawerToggle;
+
+
 
     @Override
     protected void onDestroy() {
@@ -109,34 +108,6 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
 
     }
 
-    private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
-        @Override
-        public void onDrawerSlide(View drawerView, float slideOffset) {
-
-        }
-
-        @Override
-        public void onDrawerOpened(View drawerView) {
-
-        }
-
-        @Override
-        public void onDrawerClosed(View drawerView) {
-
-        }
-
-        @Override
-        public void onDrawerStateChanged(int newState) {
-
-        }
-    };
-    private FragmentManager.OnBackStackChangedListener mBackStackChangedListener =
-            new FragmentManager.OnBackStackChangedListener() {
-                @Override
-                public void onBackStackChanged() {
-                    updateDrawerToggle();
-                }
-            };
     private GoogleApiClient mGoogleApiClient;
     private GoogleSignInOptions gso;
 
@@ -168,7 +139,6 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
 //        checkLoginstatus();
         setContentView(R.layout.activity_main);
 
-        checkLoginstatus();
         initializeToolbar();
 
         mMediaBrowser = new MediaBrowserCompat(this,
@@ -179,71 +149,7 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
     }
 
 
-    private void checkLoginstatus() {
-//        gso = MusicApplication.getGoogleSignInOptions();
-//        mGoogleApiClient = new GoogleApiClient.Builder(this)
-//                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-//                .build();
-//
-//        OptionalPendingResult<GoogleSignInResult> pendingResult =
-//                Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
-//        if (pendingResult.isDone()) {
-//            GoogleSignInAccount googleAccount = pendingResult.get().getSignInAccount();
-//            Toast.makeText(this, "已登录google user：" + googleAccount.getDisplayName(), Toast.LENGTH_SHORT).show();
-//            MusicApplication.setGoogleSignInAccount(googleAccount);
-//        } else {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this, "可使用google或emal登录：", Toast.LENGTH_SHORT).show();
-//            Toast.makeText(this, "已登录firebase user：" + auth.getAuth().get("token"), Toast.LENGTH_SHORT).show();
-            startLogin();
-        }
-    }
 
-    private void startLogin() {
-        Intent i = new Intent(MusicActivity.this, LoginActivity.class);
-        startActivity(i);
-        finish();
-    }
-
-    private void initializeToolbar() {
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        if (mToolbar == null) {
-            throw new IllegalStateException("Layout is required to include a Toolbar with id " +
-                    "'toolbar'");
-        }
-//        mToolbar.inflateMenu(R.menu.main);
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (mDrawerLayout != null) {
-            // Create an ActionBarDrawerToggle that will handle opening/closing of the drawer:
-            mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-                    mToolbar, R.string.open_content_drawer, R.string.close_content_drawer);
-            mDrawerLayout.setDrawerListener(mDrawerListener);
-//            populateDrawerItems(navigationView);
-            setSupportActionBar(mToolbar);
-            updateDrawerToggle();
-        } else {
-            setSupportActionBar(mToolbar);
-        }
-
-    }
-
-    private void updateDrawerToggle() {
-        if (mDrawerToggle == null) {
-            return;
-        }
-        Log.i(TAG, "count od fragment now:" + getFragmentManager().getBackStackEntryCount());
-        boolean isRoot = getFragmentManager().getBackStackEntryCount() == 0;
-        mDrawerToggle.setDrawerIndicatorEnabled(isRoot);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowHomeEnabled(!isRoot);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(!isRoot);
-            getSupportActionBar().setHomeButtonEnabled(!isRoot);
-        }
-        if (isRoot) {
-            mDrawerToggle.syncState();
-        }
-    }
 
     protected void initializeFromParams(Bundle savedInstanceState, Intent intent) {
         String mediaId = null;
@@ -314,19 +220,11 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
     @Override
     protected void onResume() {
         super.onResume();
-        getFragmentManager().addOnBackStackChangedListener(mBackStackChangedListener);
     }
-
-//    @Override
-//    public void onBackPressed() {
-//        super.onBackPressed();
-//        Log.i(TAG, "点击率返回键");
-//    }
 
     @Override
     protected void onPause() {
         super.onPause();
-        getFragmentManager().removeOnBackStackChangedListener(mBackStackChangedListener);
     }
 
     @Override
@@ -338,11 +236,7 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
         mMediaBrowser.disconnect();
     }
 
-    @Override
-    public void setTitle(CharSequence title) {
-        super.setTitle(title);
-        mToolbar.setTitle(title);
-    }
+
 
     @Override
     public void uncaughtException(Thread thread, Throwable ex) {
@@ -421,5 +315,10 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
 
     public BrowseFragment getBrowseFragment() {
         return (BrowseFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
+    }
+
+    @Override
+    protected void onNavItemSelect(int selectItem) {
+        super.onNavItemSelect(selectItem);
     }
 }

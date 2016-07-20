@@ -61,11 +61,11 @@
         <activity
             android:name=".SongsActivity"
             android:label="@string/title_activity_songs"
-            android:parentActivityName=".ArtistActivity"
+            android:parentActivityName=".MusicActivity"
             android:theme="@style/AppTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="music.com.example.liuzhe.music.ArtistActivity" />
+                android:value="music.com.example.liuzhe.music.MusicActivity" />
         </activity>
     </application>
 
