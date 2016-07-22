@@ -31,10 +31,8 @@
             android:parentActivityName=".LoginActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".LoginActivity"/>
+                android:value=".LoginActivity" />
         </activity>
-
-
         <activity
             android:name=".LoginActivity"
             android:label="@string/action_sign_in" />
@@ -67,6 +65,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="music.com.example.liuzhe.music.MusicActivity" />
         </activity>
+        <activity
+            android:name=".TestActivity"
+            android:label="@string/title_activity_test"
+            android:theme="@style/AppTheme"></activity>
     </application>
 
 </manifest>

@@ -31,21 +31,22 @@ public class BaseActivity extends AppCompatActivity {
     private DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.DrawerListener() {
         @Override
         public void onDrawerSlide(View drawerView, float slideOffset) {
-
+            if(mDrawerToggle!=null) mDrawerToggle.onDrawerSlide(drawerView, slideOffset);
         }
 
         @Override
         public void onDrawerOpened(View drawerView) {
-
+            if(mDrawerToggle!=null) mDrawerToggle.onDrawerOpened(drawerView);
         }
 
         @Override
         public void onDrawerClosed(View drawerView) {
-
+            if(mDrawerToggle!=null) mDrawerToggle.onDrawerClosed(drawerView);
         }
 
         @Override
         public void onDrawerStateChanged(int newState) {
+            if(mDrawerToggle!=null) mDrawerToggle.onDrawerStateChanged(newState);
             Log.i("Base slide:", String.valueOf(newState));
         }
     };
@@ -74,9 +75,23 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        //已经是第一屏了
+        if (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        //非第一屏时正常处理返回
+        if(item!=null && item.getItemId() == android.R.id.home){
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onBackPressed() {
         if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-            mDrawerLayout.closeDrawers();
+            mDrawerLayout.closeDrawer(GravityCompat.START);
             return;
         }
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -171,6 +186,7 @@ public class BaseActivity extends AppCompatActivity {
 
                 selectItem = item.getItemId();
 //                mDrawerLayout.closeDrawers();    //关闭当前窗口
+                mDrawerLayout.closeDrawer(GravityCompat.START);
                 onNavItemSelect(selectItem);
                 return true;
             }

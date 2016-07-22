@@ -2,12 +2,10 @@ package music.com.example.liuzhe.music;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -30,18 +28,22 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 import java.util.List;
 
+import music.com.example.liuzhe.music.model.ChinaArtist;
 import music.com.example.liuzhe.music.ui.SongListView;
-import music.com.example.liuzhe.music.util.Artist;
+import music.com.example.liuzhe.music.model.Artist;
 import music.com.example.liuzhe.music.util.MediaIDHelper;
-import music.com.example.liuzhe.music.util.Song;
+import music.com.example.liuzhe.music.model.Song;
 
 public class SongsActivity extends AppCompatActivity {
     private static final String TAG = "SongActivity";
 
+    private String PlayType;
+    private String artist_name;
+
     private MediaBrowserCompat mBrowserCompat;
     FloatingActionButton fab;
     private Artist artist;
-    private List<Song> songs;
+    private ChinaArtist chinaArtist;
     private SongAdapter adapter;
     private MediaBrowserCompat.ConnectionCallback mConnectCallBack = new MediaBrowserCompat.ConnectionCallback() {
         @Override
@@ -111,10 +113,8 @@ public class SongsActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        artist = getIntent().getParcelableExtra("artist");
-        setTitle(artist.getName());
+        PlayType = getIntent().getStringExtra("type");
 
-        songs = artist.getSongs();
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -128,15 +128,28 @@ public class SongsActivity extends AppCompatActivity {
 
         SongListView song_list = (SongListView) findViewById(R.id.song_list);
 
-        adapter = new SongAdapter(this);
 
         mBrowserCompat = new MediaBrowserCompat(this, new ComponentName(this, MusicService.class), mConnectCallBack, null);
 
-        Glide.with(this)
-                .load(artist.getPhotoUrl())
-                .into((ImageView) findViewById(R.id.toolbar_artist_photo));
+        adapter = new SongAdapter(this);
+        if(PlayType.equals(MusicService.DISCO_MUSIC)) {
+            artist = getIntent().getParcelableExtra("artist");
+            artist_name = artist.getName();
+            Glide.with(this)
+                    .load(artist.getPhotoUrl())
+                    .into((ImageView) findViewById(R.id.toolbar_artist_photo));
+        }else {
+            chinaArtist = getIntent().getParcelableExtra("chartist");
+            artist_name = chinaArtist.getSingername();
+            Glide.with(this)
+                    .load(chinaArtist.getImgurl())
+                    .into((ImageView) findViewById(R.id.toolbar_artist_photo));
+        }
+
+        setTitle(artist_name);
 
         song_list.setAdapter(adapter);
+
 
         song_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -144,8 +157,10 @@ public class SongsActivity extends AppCompatActivity {
                 //播放当前曲目
                 MediaBrowserCompat.MediaItem item = adapter.getItem(position);
                 Log.i(TAG, "播放:" + item.getMediaId());
+                Bundle b = new Bundle();
+                b.putString("PlayType", PlayType);
                 getSupportMediaController().getTransportControls().
-                        playFromMediaId(item.getMediaId(), null);
+                        playFromMediaId(item.getMediaId(), b);
             }
         });
 
@@ -188,7 +203,7 @@ public class SongsActivity extends AppCompatActivity {
 //            Song song = getItem(position);
             MediaBrowserCompat.MediaItem item = getItem(position);
             holder.mTitleView.setText(item.getDescription().getTitle().toString());
-            holder.mDescriptionView.setText(artist.getName());
+            holder.mDescriptionView.setText(artist_name);
             holder.mImageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_play_arrow_red_24dp));
 
             MediaControllerCompat controller = getSupportMediaController();
@@ -227,9 +242,9 @@ public class SongsActivity extends AppCompatActivity {
 
         controllerCompat.registerCallback(ControlCallBack);
 
-        mBrowserCompat.unsubscribe(MusicService.MEDIA_ID_MUSICS_BY_ARTIST + "/" + artist.getName());
+        mBrowserCompat.unsubscribe(PlayType + MusicService.MEDIA_ID_MUSICS_BY_ARTIST + "/" + artist_name);
 
-        mBrowserCompat.subscribe(MusicService.MEDIA_ID_MUSICS_BY_ARTIST + "/" + artist.getName(), mSubscriptionCallback);
+        mBrowserCompat.subscribe(PlayType + MusicService.MEDIA_ID_MUSICS_BY_ARTIST + "/" + artist_name, mSubscriptionCallback);
 
     }
 
@@ -245,6 +260,7 @@ public class SongsActivity extends AppCompatActivity {
         if (getSupportMediaController() != null) {
             getSupportMediaController().unregisterCallback(ControlCallBack);
         }
+        mBrowserCompat.disconnect();
     }
 
     @Override

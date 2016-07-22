@@ -13,6 +13,7 @@ import android.util.Log;
 
 import java.io.IOException;
 
+import music.com.example.liuzhe.music.util.GetSongsUtil;
 import music.com.example.liuzhe.music.util.MediaIDHelper;
 
 /**
@@ -73,7 +74,7 @@ public class Playback implements MediaPlayer.OnPreparedListener,
         return mState;
     }
 
-    public void play(MediaSessionCompat.QueueItem queueItem) {
+    public void play(MediaSessionCompat.QueueItem queueItem, String mCurrentPlayType) {
         mPlayOnFocusGain = true;
 //        tryToGetAudioFocus();
 //        registerAudioNoisyReceiver();
@@ -95,43 +96,59 @@ public class Playback implements MediaPlayer.OnPreparedListener,
             Log.i(TAG, "provider retur track is null?" + track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI));
 
             String source = null;
-//            if (track != null) {
             source = track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI);
-//            }
 
+            if(mCurrentPlayType.equals(MusicService.CHINESE_MUSIC)){
+//                source = GetSongsUtil.getInstance().getPlayUrl(source);
+                GetSongsUtil.getInstance().getPlayUrl(source, new GetSongsUtil.SongUtilCallBack() {
+                    @Override
+                    public void fetchCount(Integer integer) {
 
-            try {
-                Log.i(TAG, "加载播放器");
-                createMediaPlayerIfNeeded();
+                    }
 
-                mState = PlaybackStateCompat.STATE_BUFFERING;
+                    @Override
+                    public void getchUrl(String s) {
+                        startPlay(s);
+                    }
+                });
+            }else {
+                startPlay(source);
+            }
+        }
+    }
 
-                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                mMediaPlayer.setDataSource(source);
-                Log.i(TAG, "加载音乐前");
+    private void startPlay(String source) {
+        try {
+            Log.i(TAG, "加载播放器");
+            createMediaPlayerIfNeeded();
 
-                // Starts preparing the media player in the background. When
-                // it's done, it will call our OnPreparedListener (that is,
-                // the onPrepared() method on this class, since we set the
-                // listener to 'this'). Until the media player is prepared,
-                // we *cannot* call start() on it!
-                mMediaPlayer.prepareAsync();
+            mState = PlaybackStateCompat.STATE_BUFFERING;
 
-                Log.i(TAG, "加载音乐后");
-                // If we are streaming from the internet, we want to hold a
-                // Wifi lock, which prevents the Wifi radio from going to
-                // sleep while the song is playing.
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mMediaPlayer.setDataSource(source);
+            Log.i(TAG, "加载音乐前");
+
+            // Starts preparing the media player in the background. When
+            // it's done, it will call our OnPreparedListener (that is,
+            // the onPrepared() method on this class, since we set the
+            // listener to 'this'). Until the media player is prepared,
+            // we *cannot* call start() on it!
+            mMediaPlayer.prepareAsync();
+
+            Log.i(TAG, "加载音乐后");
+            // If we are streaming from the internet, we want to hold a
+            // Wifi lock, which prevents the Wifi radio from going to
+            // sleep while the song is playing.
 //                mWifiLock.acquire();
 
-                if (mCallback != null) {
-                    mCallback.onPlaybackStatusChanged(mState);
-                }
+            if (mCallback != null) {
+                mCallback.onPlaybackStatusChanged(mState);
+            }
 
-            } catch (IOException ex) {
-                Log.e(TAG, ex + "Exception playing song");
-                if (mCallback != null) {
-                    mCallback.onError(ex.getMessage());
-                }
+        } catch (IOException ex) {
+            Log.e(TAG, ex + "Exception playing song");
+            if (mCallback != null) {
+                mCallback.onError(ex.getMessage());
             }
         }
     }

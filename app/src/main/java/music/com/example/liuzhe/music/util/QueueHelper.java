@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import music.com.example.liuzhe.music.MusicProvider;
+import music.com.example.liuzhe.music.MusicService;
 
 /**
  * Created by liuzhe on 2016/6/8.
@@ -20,9 +21,9 @@ public class QueueHelper {
     private static final String TAG = "QueueHelper";
 
 
-    public static List<MediaSessionCompat.QueueItem> getRandomQueue(MusicProvider provider) {
+    public static List<MediaSessionCompat.QueueItem> getRandomQueue(MusicProvider provider, String type) {
         //获取基本信息
-        Iterator<String > iterator = provider.getArtists().iterator();
+        Iterator<String > iterator = provider.getArtists(type).iterator();
         //检查是否为空,若为空则返回一个空list
         if(!iterator.hasNext()){
             return Collections.emptyList();
@@ -30,7 +31,7 @@ public class QueueHelper {
 
         String artistname = iterator.next();
         Log.i(TAG, "iterator gerner is :" + artistname);
-        Iterable<MediaMetadataCompat> tracks = provider.getMusicsByArtistName(artistname);
+        Iterable<MediaMetadataCompat> tracks = provider.getMusicsByArtistName(type, artistname);
         Log.i(TAG, "get all gener is :" + tracks);
         return convertToQueue(tracks, MEDIA_ID_MUSICS_BY_ARTIST, artistname);
     }
@@ -66,10 +67,10 @@ public class QueueHelper {
         return (queue != null && index >= 0 && index < queue.size());
     }
 
-    public static List<MediaSessionCompat.QueueItem> getPlayingQueue(String mediaId, MusicProvider provider) {
+    public static List<MediaSessionCompat.QueueItem> getPlayingQueue(String mediaId, MusicProvider provider, String type) {
 
         // extract the browsing hierarchy from the media ID:
-        String[] hierarchy = MediaIDHelper.getHierarchy(mediaId);
+        final String[] hierarchy = MediaIDHelper.getHierarchy(mediaId);
 
         if (hierarchy.length != 2) {
             Log.e(TAG, "Could not build a playing queue for this mediaId: " + mediaId);
@@ -83,18 +84,24 @@ public class QueueHelper {
         Iterable<MediaMetadataCompat> tracks = null;
         // This sample only supports genre and by_search category types.
         if (categoryType.equals(MEDIA_ID_MUSICS_BY_ARTIST)) {
-            tracks = provider.getMusicsByArtistName(categoryValue);
+            switch (type){
+                case MusicService.DISCO_MUSIC:
+                    tracks = provider.getMusicsByArtistName(type, categoryValue);
+                    break;
+                case MusicService.CHINESE_MUSIC:
+                    tracks = provider.getSongsQueueByArtistName(categoryValue);
+                    break;
+                default:
+                    break;
+            }
         }
-//        } else if (categoryType.equals(MEDIA_ID_MUSICS_BY_SEARCH)) {
-//            tracks = provider.searchMusicBySongTitle(categoryValue);
-//        }
 
         if (tracks == null) {
             Log.e(TAG, "Unrecognized category type: " + categoryType + " for media " + mediaId);
             return null;
         }
-
         return convertToQueue(tracks, hierarchy[0], hierarchy[1]);
+
     }
 
     public static int getMusicIndexOnQueue(List<MediaSessionCompat.QueueItem> queue, String mediaId) {

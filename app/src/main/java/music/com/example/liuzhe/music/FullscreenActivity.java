@@ -2,25 +2,15 @@ package music.com.example.liuzhe.music;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.widget.AppCompatImageView;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
-import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawableResource;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 
 import music.com.example.liuzhe.music.util.AlbumArtCache;
-import music.com.example.liuzhe.music.util.Artist;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.

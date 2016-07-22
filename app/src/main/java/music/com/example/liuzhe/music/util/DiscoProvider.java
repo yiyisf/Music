@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import music.com.example.liuzhe.music.MutableMediaMetadata;
+import music.com.example.liuzhe.music.model.Song;
 
 /**
  * Created by liuzhe on 2016/7/18.

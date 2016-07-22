@@ -1,6 +1,6 @@
 package music.com.example.liuzhe.music.Interface;
 
-import music.com.example.liuzhe.music.util.Song;
+import music.com.example.liuzhe.music.model.Song;
 
 /**
  * Created by liuzhe on 16/7/18.

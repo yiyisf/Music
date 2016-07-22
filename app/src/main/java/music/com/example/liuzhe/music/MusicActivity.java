@@ -1,6 +1,5 @@
 package music.com.example.liuzhe.music;
 
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -10,20 +9,12 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
@@ -34,10 +25,13 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
         BrowseFragment.FragmentDataHelper {
 
     private static final String TAG = "Main Activity";
-    private static final String FRAGMENT_TAG = "container";
-    private static final java.lang.String SAVED_MEDIA_ID = "music.com.example.liuzhe.music.MEDIA_ID";
+    private static final String FRAGMENT_TAG = "DISCO container";
+    private static final String FRAGMENT_TAG1 = "CH container";
+    private static final String SAVED_MEDIA_ID = "music.com.example.liuzhe.music.MEDIA_ID";
+    private static final String SAVED_MEDIA_TYPE = "music.com.example.liuzhe.music.MEDIA_TYPE";
     private MediaBrowserCompat mMediaBrowser;
     private PlaybackControlsFragment mControlsFragment;
+    private String type;
     private MediaBrowserCompat.ConnectionCallback mConnectionCallback =
             new MediaBrowserCompat.ConnectionCallback() {
 
@@ -127,7 +121,6 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
             mControlsFragment.onConnected();
         }
 
-        //暂时先取消处理
         getBrowseFragment().onConnected();
 
     }
@@ -137,6 +130,7 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
         super.onCreate(savedInstanceState);
 //        Log.i("主界面：","起来了");
 //        checkLoginstatus();
+        Log.i(TAG, "SAVED_INSTANCE is null" + String.valueOf(savedInstanceState==null));
         setContentView(R.layout.activity_main);
 
         initializeToolbar();
@@ -149,10 +143,9 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
     }
 
 
-
-
     protected void initializeFromParams(Bundle savedInstanceState, Intent intent) {
         String mediaId = null;
+        type = MusicService.DISCO_MUSIC;
         // check if we were started from a "Play XYZ" voice search. If so, we save the extras
         // (which contain the query details) in a parameter, so we can reuse it later, when the
         // MediaSession is connected.
@@ -160,8 +153,9 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
         if (savedInstanceState != null) {
             // If there is a saved media ID, use it
             mediaId = savedInstanceState.getString(SAVED_MEDIA_ID);
+            type = savedInstanceState.getString(SAVED_MEDIA_TYPE);
         }
-        navigateToBrowser(mediaId);
+        navigateToBrowser(mediaId, type);
 //        navigateToArtist();
     }
 
@@ -179,23 +173,48 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
 //        }
 //    }
 
-    private void navigateToBrowser(String mediaId) {
-        Log.i(TAG, "to browser meids : " + mediaId);
-        BrowseFragment fragment = getBrowseFragment();
-        if (fragment == null || !TextUtils.equals(fragment.getMediaId(), mediaId)) {
-            fragment = new BrowseFragment();
-            fragment.setMediaId(mediaId);
-            FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.setCustomAnimations(
-                    R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                    R.animator.slide_in_from_left, R.animator.slide_out_to_right);
-            transaction.replace(R.id.container, fragment, FRAGMENT_TAG);
-            if (mediaId != null) {
-                transaction.addToBackStack(null);
-            }
-            transaction.commit();
+    private void navigateToBrowser(String mediaId, String type) {
+        Log.i(TAG, "to browser meids : " + type + mediaId);
 
-        }
+//        if (type.equals(MusicService.DISCO_MUSIC)) {
+//            fragment = getBrowseFragment();
+//        }else {
+//            fragment =
+//        }
+
+
+//        if (fragment == null ||
+//                !TextUtils.equals(fragment.getMediaId(), mediaId) ||
+//                !TextUtils.equals(fragment.getType(), type)) {
+//        BrowseFragment fragment = getBrowseFragment();
+        BrowseFragment fragment = new BrowseFragment();
+        fragment.setMediaId(mediaId, type);
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        transaction.setCustomAnimations(
+                R.animator.slide_in_from_right, R.animator.slide_out_to_left,
+                R.animator.slide_in_from_left, R.animator.slide_out_to_right);
+        transaction.replace(R.id.container, fragment, FRAGMENT_TAG);
+//        if (mediaId != null) {
+//            transaction.addToBackStack(null);
+//        }
+        transaction.commit();
+//        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        Log.i(TAG, "save instance");
+        outState.putString(SAVED_MEDIA_TYPE, type);
+        outState.putString(SAVED_MEDIA_ID, null);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        Log.i(TAG, "restore instance");
+        type = savedInstanceState.getString(SAVED_MEDIA_TYPE);
+        super.onRestoreInstanceState(savedInstanceState);
+//        type = savedInstanceState.getString(SAVED_MEDIA_TYPE);
     }
 
     @Override
@@ -230,12 +249,12 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
     @Override
     protected void onStop() {
         super.onStop();
+        Log.i(TAG, "主界面stop");
         if (getSupportMediaController() != null) {
             getSupportMediaController().unregisterCallback(mMediaControllerCallback);
         }
         mMediaBrowser.disconnect();
     }
-
 
 
     @Override
@@ -248,7 +267,7 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
     public void onMediaItemSelected(MediaBrowserCompat.MediaItem item) {
         //浏览处理,继续使用Browserfragment
         if (item.isBrowsable()) {
-            navigateToBrowser(item.getMediaId());
+            navigateToBrowser(item.getMediaId(), type);
         } else if (item.isPlayable()) {
             //直接播放，activity中已设置监听处理
             getSupportMediaController().getTransportControls().
@@ -258,7 +277,7 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
 
     @Override
     public void setToolbarTitle(CharSequence title) {
-        if(title==null) {
+        if (title == null) {
             title = getString(R.string.app_name);
         }
         Log.i(TAG, "set title is:" + title);
@@ -317,8 +336,24 @@ public class MusicActivity extends BaseActivity implements Thread.UncaughtExcept
         return (BrowseFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
     }
 
+    public BrowseFragment getBrowseChFragment() {
+        return (BrowseFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG1);
+    }
+
     @Override
     protected void onNavItemSelect(int selectItem) {
-        super.onNavItemSelect(selectItem);
+        switch (selectItem) {
+            case R.id.disco:
+                type = MusicService.DISCO_MUSIC;
+//                navigateToBrowser(null, type);
+                break;
+            case R.id.Chinese:
+                type = MusicService.CHINESE_MUSIC;
+                Log.i(TAG, "处理华人歌手");
+                break;
+        }
+
+        navigateToBrowser(null, type);
+
     }
 }

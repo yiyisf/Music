@@ -1,4 +1,4 @@
-package music.com.example.liuzhe.music;
+package music.com.example.liuzhe.music.ui;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -32,7 +32,12 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 import java.util.List;
 
-import music.com.example.liuzhe.music.model.ChinaArtist;
+import music.com.example.liuzhe.music.BrowseFragment;
+import music.com.example.liuzhe.music.MusicApplication;
+import music.com.example.liuzhe.music.MusicProvider;
+import music.com.example.liuzhe.music.MusicService;
+import music.com.example.liuzhe.music.R;
+import music.com.example.liuzhe.music.SongsActivity;
 import music.com.example.liuzhe.music.util.AlbumArtCache;
 import music.com.example.liuzhe.music.model.Artist;
 import music.com.example.liuzhe.music.util.MediaIDHelper;
@@ -41,17 +46,16 @@ import music.com.example.liuzhe.music.util.NetworkHelper;
 /**
  * Created by liuzhe on 2016/6/7.
  */
-public class BrowseFragment extends Fragment implements Thread.UncaughtExceptionHandler {
-    private static final String TAG = "BrowseFragment";
+public class ChineseFragment extends Fragment implements Thread.UncaughtExceptionHandler {
+    private static final String TAG = "ChineseFragment";
     public static final String ARG_MEDIA_ID = "media_id";
-    public static final String ARG_MEDIA_TYPE = "media_type";
     private String mMediaId;
     private String type;
     private String mMediaId_new;
     //    private MediaBrowserCompat mMediaBrowser;
     private BrowseAdapter mBrowseAdapter;
     private ProgressDialog mProgressDialog;
-    private FragmentDataHelper mFragmentListenr;
+    private BrowseFragment.FragmentDataHelper mFragmentListenr;
     private View errorView;
     private TextView errorMsgView;
     private ProgressBar mProgressBar;
@@ -84,9 +88,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        Log.i(TAG, "设置接口");
-
-        mFragmentListenr = (FragmentDataHelper) activity;
+        mFragmentListenr = (BrowseFragment.FragmentDataHelper) activity;
     }
 
     @Override
@@ -104,17 +106,14 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
         }
         //如无歌手id,则获取所有歌手
         mMediaId = getMediaId();
-        Log.i(TAG, "get mid id:" + (mMediaId==null ? "null": mMediaId) + "type:" + getType());
+        Log.i(TAG, "get mid id:" + (mMediaId==null ? "null": mMediaId));
         if (mMediaId == null) {
             mMediaId = mFragmentListenr.getMediaBrowser().getRoot();
 
         }
 
-        Log.i(TAG, "return mediaid is :" + mMediaId);
-
-//        mFragmentListenr.getMediaBrowser().unsubscribe(mMediaId);
-        mFragmentListenr.getMediaBrowser().unsubscribe(getType() + mMediaId);
-        mFragmentListenr.getMediaBrowser().subscribe(getType() + mMediaId, mSubscriptionCallback);
+        mFragmentListenr.getMediaBrowser().unsubscribe(mMediaId);
+        mFragmentListenr.getMediaBrowser().subscribe(type + mMediaId, mSubscriptionCallback);
 
         // Add MediaController callback so we can redraw the list when metadata changes:
         MediaControllerCompat controller = ((AppCompatActivity) getActivity())
@@ -133,7 +132,7 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
             return;
         }
 
-        if(android.os.Build.VERSION.SDK_INT >= 23) {
+        if(Build.VERSION.SDK_INT >= 23) {
             MediaBrowserCompat mediaBrowser = mFragmentListenr.getMediaBrowser();
             mediaBrowser.getItem(mMediaId, new MediaBrowserCompat.ItemCallback() {
                 @Override
@@ -147,10 +146,9 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
         }
     }
 
-    public void setMediaId(String mediaId, String type) {
+    public void setMediaId(String mediaId) {
         Bundle args = new Bundle(1);
         args.putString(ARG_MEDIA_ID, mediaId);
-        args.putString(ARG_MEDIA_TYPE, type);
         setArguments(args);
         Log.i(TAG, "set mid id:" + mediaId);
     }
@@ -169,23 +167,13 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     }
 
     public String  getType() {
-        Bundle args = getArguments();
-        if (args != null) {
-            return args.getString(ARG_MEDIA_TYPE);
-        }
-        return null;
+        return type;
     }
 
     public void setType(String type) {
-        type = type;
+        this.type = type;
     }
 
-
-    //提供接口处理点击事件
-    public interface FragmentDataHelper extends MediaBrowserProvider {
-        void onMediaItemSelected(MediaBrowserCompat.MediaItem item);
-        void setToolbarTitle(CharSequence title);
-    }
 
     private MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback =
             new MediaBrowserCompat.SubscriptionCallback() {
@@ -198,7 +186,6 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
                 public void onChildrenLoaded(@NonNull String parentId, List<MediaBrowserCompat.MediaItem> children) {
                     mBrowseAdapter.clear();
                     mBrowseAdapter.notifyDataSetInvalidated();
-                    Log.i(TAG, "loaded children is empty ?" + String.valueOf(children.isEmpty()));
                     checkForUserVisibleErrors(children.isEmpty());
                     for (MediaBrowserCompat.MediaItem item : children) {
                         mBrowseAdapter.add(item);
@@ -232,13 +219,10 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
     @Override
     public void onStop() {
         super.onStop();
-
-        Log.i(TAG, "stop");
-
         //获取主activity中的mediabrowser并释放(如不为空)
         MediaBrowserCompat browserCompat = mFragmentListenr.getMediaBrowser();
         if (browserCompat != null && browserCompat.isConnected() && mMediaId != null) {
-            browserCompat.unsubscribe(getType() + mMediaId);
+            browserCompat.unsubscribe(mMediaId);
         }
         //取消控制器回调
         MediaControllerCompat controller = ((AppCompatActivity) getActivity())
@@ -271,18 +255,11 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
 //                mFragmentListenr.onMediaItemSelected(item);
 
 //                以新的activity显示
+                Artist a = MusicProvider.getInstence().getArtistByArtistName(item.getDescription().getTitle().toString());
+                Log.i(TAG, "start display songs:" + a.getSongs().toString());
                 Intent i = new Intent(getActivity(), SongsActivity.class);
-                if(getType().equals(MusicService.DISCO_MUSIC)) {
-                    Artist a = MusicProvider.getInstence().getArtistByArtistName(item.getDescription().getTitle().toString());
-                    Log.i(TAG, "start display songs:" + a.getSongs().toString());
-                    i.putExtra("artist", a);
-                }else if(getType().equals(MusicService.CHINESE_MUSIC)){
-                    ChinaArtist a = MusicProvider.getInstence().getArtistByChArtistName(item.getDescription().getTitle().toString());
-                    Log.i(TAG, "start display songs:" + a.getSingername());
-                    i.putExtra("chartist", a);
-                }
 
-                i.putExtra("type", getType());
+                i.putExtra("artist", a);
                 getActivity().overridePendingTransition(R.animator.slide_in_from_right, R.animator.slide_out_to_left);
                 startActivity(i);
             }
@@ -414,7 +391,6 @@ public class BrowseFragment extends Fragment implements Thread.UncaughtException
             showError = true;
         } else {
             // otherwise, if state is ERROR and metadata!=null, use playback state error message:
-            Log.i(TAG, "activity is null ?" + (AppCompatActivity)getActivity());
             MediaControllerCompat controller = ((AppCompatActivity) getActivity())
                     .getSupportMediaController();
             if (controller != null

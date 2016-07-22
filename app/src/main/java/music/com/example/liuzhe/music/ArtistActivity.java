@@ -1,7 +1,6 @@
 package music.com.example.liuzhe.music;
 
 import android.content.Intent;
-import android.support.v4.app.BundleCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatImageView;
@@ -18,7 +17,7 @@ import com.firebase.ui.database.FirebaseListAdapter;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 
-import music.com.example.liuzhe.music.util.Artist;
+import music.com.example.liuzhe.music.model.Artist;
 
 public class ArtistActivity extends AppCompatActivity implements Thread.UncaughtExceptionHandler {
     private ListViewCompat listViewCompat;

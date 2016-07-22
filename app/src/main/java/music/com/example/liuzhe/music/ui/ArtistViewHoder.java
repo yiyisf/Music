@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.View;
 
 import music.com.example.liuzhe.music.R;
-import music.com.example.liuzhe.music.util.Artist;
 
 /**
  * Created by liuzhe on 2016/7/17.
